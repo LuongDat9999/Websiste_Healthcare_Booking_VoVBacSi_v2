@@ -193,14 +193,20 @@ public class BacsisController : Controller
     public IActionResult HomeBs()
     {
         var userId = _session.GetString("userId");
+        ArrayList idBS_sql = db.get("EXEC GetMaBSByUserId @UserId = " + userId);
+
+        // Ép kiểu từng phần tử
+        ArrayList row = (ArrayList)idBS_sql[0]; // Lấy dòng đầu tiên
+        int idBS = int.Parse(row[0].ToString());
         ViewBag.luong = db.get("exec sp_XemThongTinNguoiDung " + userId);
-        ViewBag.daXacNhan = db.get($"EXEC Xemtatcalichhendaxacnhan {userId}");
-        ViewBag.choXacNhan = db.get($"EXEC Xemtatcalichhenchuaxacnhan {userId}");
+        ViewBag.daXacNhan = db.get($"EXEC Xemtatcalichhendaxacnhan {idBS}");
+        ViewBag.choXacNhan = db.get($"EXEC Xemtatcalichhenchuaxacnhan {idBS}");
         return View();  
     }
     public IActionResult ThongKe(string nam, string loaiBieuDo = "bar")
     {
         var userId = _session.GetString("userId");
+
         ViewBag.luong = db.get("exec sp_XemThongTinNguoiDung " + userId);
         ViewBag.list = db.get("EXEC ThongKeCuocHenTheoThang '" + userId + "','" + nam + "'");
         ViewBag.loaiBieuDo = loaiBieuDo;

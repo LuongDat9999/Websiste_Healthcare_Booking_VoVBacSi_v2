@@ -3,24 +3,27 @@
     Layout = "~/Views/Shared/Bs_Layout.cshtml";
     <link rel="stylesheet" href="~/css/HomeBs.css" asp-append-version="true" />
 }
-<span>Tổng Thu nhập: @ViewBag.luong[0][9]</span>
+<div class="section-card" style="max-width:400px; margin-bottom:32px; text-align:left;">
+    <div style="font-size:1.1rem; color:#0288d1; font-weight:600; margin-bottom:6px;">Tổng Thu nhập</div>
+    <div style="font-size:2.1rem; color:#01579b; font-weight:700;">@ViewBag.luong[0][9] <span style="font-size:1.1rem; color:#0288d1;">VNĐ</span></div>
+</div>
 
-<h2>Lịch khám đã xác nhận</h2>
+<h2 style="text-align:left;">Lịch khám</h2>
 @if (ViewBag.daXacNhan == null || ViewBag.daXacNhan.Count == 0)
 {
     <p>Không có lịch khám đã xác nhận.</p>
 }
 else
 {
-    <table class="table table-bordered">
+    <table class="table">
         <thead>
             <tr>
-                <th>STT</th>
+                <th class="stt-col">STT</th>
                 <th>Tên bệnh nhân</th>
-                <th>Ngày khám</th>
-                <th>Giờ khám</th>
+                <th>Thời gian đặt lịch</th>
                 <th>Trạng thái</th>
                 <th>Chi tiết</th>
+                <th>Thao tác</th>
             </tr>
         </thead>
         <tbody>
@@ -28,13 +31,24 @@ else
         {
             var row = ViewBag.daXacNhan[i];
             <tr>
-                <td>@(i+1)</td>
+                <td class="stt-col">@(i+1)</td>
                 <td>@row[2]</td>
-                <td>@row[4]</td>
-                <td>@row[5]</td>
-                <td>@row[8]</td>
+                <td>@row[6]</td>
+                <td>Đã xác nhận</td>
                 <td>
-                    <a class="btn btn-info" target="_blank" href="@Url.Action("ChiTietBenhNhan", "Admin", new { id = row[1] })">Xem chi tiết</a>
+                    <a class="btn btn-info" target="_blank" href="@Url.Action("ChiTietHoSoBN", "Bacsis", new { id = row[9] })">Hồ sơ bệnh nhân</a>
+                </td>
+                <td style="min-width:160px;">
+                    <form asp-action="UpdatecuochenTT" asp-controller="Bacsis" method="post" style="display:inline;">
+                        <input type="hidden" name="id" value="@row[0]" />
+                        <input type="hidden" name="matt" value="4" /> <!-- Đã hoàn thành -->
+                        <button type="submit" class="btn btn-success" style="margin-right:6px;">Khám</button>
+                    </form>
+                    <form asp-action="Updatecuochen" asp-controller="Bacsis" method="post" style="display:inline;">
+                        <input type="hidden" name="id" value="@row[0]" />
+                        <input type="hidden" name="matt" value="3" /> <!-- Hủy -->
+                        <button type="submit" class="btn btn-danger">Hủy</button>
+                    </form>
                 </td>
             </tr>
         }
@@ -42,22 +56,22 @@ else
     </table>
 }
 
-<h2>Danh sách chờ xác nhận</h2>
+<h2 style="text-align:left;">Danh sách chờ xác nhận</h2>
 @if (ViewBag.choXacNhan == null || ViewBag.choXacNhan.Count == 0)
 {
     <p>Không có lịch hẹn chờ xác nhận.</p>
 }
 else
 {
-    <table class="table table-bordered">
+    <table class="table">
         <thead>
             <tr>
-                <th>STT</th>
+                <th class="stt-col">STT</th>
                 <th>Tên bệnh nhân</th>
-                <th>Ngày khám</th>
-                <th>Giờ khám</th>
+                <th>Thời gian đặt lịch</th>
                 <th>Trạng thái</th>
                 <th>Chi tiết</th>
+                <th>Thao tác</th>
             </tr>
         </thead>
         <tbody>
@@ -65,13 +79,22 @@ else
         {
             var row = ViewBag.choXacNhan[i];
             <tr>
-                <td>@(i+1)</td>
+                <td class="stt-col">@(i+1)</td>
                 <td>@row[2]</td>
                 <td>@row[4]</td>
-                <td>@row[5]</td>
-                <td>@row[8]</td>
-                <td>
-                    <a class="btn btn-info" target="_blank" href="@Url.Action("ChiTietBenhNhan", "Admin", new { id = row[1] })">Xem chi tiết</a>
+                <td>@row[7]</td>
+                <td>@row[1]</td> 
+                <td style="min-width:160px;">
+                    <form asp-action="Updatecuochen" asp-controller="Bacsis" method="post" style="display:inline;">
+                        <input type="hidden" name="id" value="@row[0]" />
+                        <input type="hidden" name="matt" value="2" /> <!-- Xác nhận -->
+                        <button type="submit" class="btn btn-success" style="margin-right:6px;">Xác nhận</button>
+                    </form>
+                    <form asp-action="Updatecuochen" asp-controller="Bacsis" method="post" style="display:inline;">
+                        <input type="hidden" name="id" value="@row[0]" />
+                        <input type="hidden" name="matt" value="3" /> <!-- Hủy -->
+                        <button type="submit" class="btn btn-danger">Hủy</button>
+                    </form>
                 </td>
             </tr>
         }

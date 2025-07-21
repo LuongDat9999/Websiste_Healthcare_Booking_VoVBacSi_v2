@@ -218,26 +218,51 @@ h2 {
     vertical-align: middle;
 }
 
-.btn {
-    padding: 8px 20px;
-    border-radius: 50px;
-    border: none;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
-    outline: none;
-    box-shadow: 0 2px 8px rgba(2,136,209,0.08);
-}
-.btn-info {
-    background: linear-gradient(90deg, #0288d1 60%, #26c6da 100%);
+.btn-success {
+    background: #43a047;
     color: #fff;
     border: none;
+    box-shadow: 0 2px 8px rgba(67,160,71,0.08);
+}
+.btn-success:hover {
+    background: #2e7031;
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(67,160,71,0.13);
+}
+
+.btn-danger {
+    background: #e53935;
+    color: #fff;
+    border: none;
+    box-shadow: 0 2px 8px rgba(229,57,53,0.08);
+}
+.btn-danger:hover {
+    background: #ab000d;
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(229,57,53,0.13);
+}
+
+.btn-info {
+    background: #0288d1;
+    color: #fff;
+    border: none;
+    box-shadow: 0 2px 8px rgba(2,136,209,0.08);
 }
 .btn-info:hover {
     background: #01579b;
-    color: #ffe082;
+    color: #fff;
     box-shadow: 0 4px 16px rgba(2,136,209,0.13);
+}
+
+.btn {
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 8px 20px;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    outline: none;
+    border: none;
+    box-shadow: 0 2px 8px rgba(2,136,209,0.08);
 }
 
 .table-responsive {
@@ -245,6 +270,15 @@ h2 {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     margin-bottom: 24px;
+}
+
+.table th.stt-col, .table td.stt-col {
+    width: 40px;
+    min-width: 40px;
+    max-width: 40px;
+    text-align: center;
+    padding-left: 0;
+    padding-right: 0;
 }
 
 /* Responsive */
