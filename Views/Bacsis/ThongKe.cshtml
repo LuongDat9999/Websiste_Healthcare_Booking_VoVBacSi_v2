@@ -1,0 +1,92 @@
+@{
+    ViewData["Title"] = "Thống kê";
+    Layout = "~/Views/Shared/Bs_Layout.cshtml";
+    var loaiBieuDo = ViewBag.loaiBieuDo as string ?? "bar";
+    var nam = ViewBag.nam as string ?? DateTime.Now.Year.ToString();
+}
+<link rel="stylesheet" href="~/css/HomeBs.css" asp-append-version="true" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<h2>Thống Kê Cuộc Hẹn Khám</h2>
+<form method="get" action="@Url.Action("ThongKe", "Bacsis")">
+    <div class="form-group">
+        <label for="Nam">Chọn Năm:</label>
+        <input type="text" class="form-control" value="@nam" id="Nam" name="nam" placeholder="Nhập Năm" />
+    </div>
+    <div class="form-group">
+        <label for="loaiBieuDo">Chọn loại biểu đồ:</label>
+        <select id="loaiBieuDo" name="loaiBieuDo" class="form-control">
+            <option value="bar" selected="@(loaiBieuDo == "bar")">Biểu đồ cột</option>
+            <option value="line" selected="@(loaiBieuDo == "line")">Biểu đồ đường</option>
+            <option value="pie" selected="@(loaiBieuDo == "pie")">Biểu đồ tròn</option>
+        </select>
+
+    </div>
+    <button type="submit" class="btn btn-primary">Thống Kê</button>
+</form>
+<hr />
+<canvas id="chart"></canvas>
+@if (ViewBag.list == null || ViewBag.list.Count == 0)
+{
+    <p>Không có dữ liệu thống kê cho năm này.</p>
+}
+else
+{
+    <script>
+        var data = @Html.Raw(Json.Serialize(ViewBag.list));
+        var allMonths = Array.from({length: 12}, (_, i) => i + 1);
+        var appointmentCounts = allMonths.map(function(month) {
+            var monthData = data.find(function(item) { return item[0] == month; });
+            return monthData ? monthData[1] : 0;
+        });
+        var ctx = document.getElementById('chart').getContext('2d');
+        var chartType = '@loaiBieuDo';
+        var chartData = {
+            labels: allMonths.map(function(month) { return 'Tháng ' + month; }),
+            datasets: [{
+                label: 'Số Lượng Cuộc Hẹn',
+                data: appointmentCounts,
+                backgroundColor: chartType === 'pie' ? [
+                    'rgba(255, 99, 132, 0.2)',
+                    'rgba(54, 162, 235, 0.2)',
+                    'rgba(255, 206, 86, 0.2)',
+                    'rgba(75, 192, 192, 0.2)',
+                    'rgba(153, 102, 255, 0.2)',
+                    'rgba(255, 159, 64, 0.2)',
+                    'rgba(199, 199, 199, 0.2)',
+                    'rgba(83, 102, 255, 0.2)',
+                    'rgba(255, 99, 132, 0.2)',
+                    'rgba(54, 162, 235, 0.2)',
+                    'rgba(255, 206, 86, 0.2)',
+                    'rgba(75, 192, 192, 0.2)'
+                ] : 'rgba(54, 162, 235, 0.2)',
+                borderColor: chartType === 'pie' ? [
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)',
+                    'rgba(255, 159, 64, 1)',
+                    'rgba(199, 199, 199, 1)',
+                    'rgba(83, 102, 255, 1)',
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)'
+                ] : 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        };
+        var chartOptions = {
+            responsive: true,
+            scales: chartType !== 'pie' ? {
+                y: { beginAtZero: true }
+            } : undefined
+        };
+        new Chart(ctx, {
+            type: chartType,
+            data: chartData,
+            options: chartOptions
+        });
+    </script>
+} 

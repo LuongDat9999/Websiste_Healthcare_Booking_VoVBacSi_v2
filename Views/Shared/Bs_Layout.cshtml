@@ -38,20 +38,19 @@
     </div>
 </header>
 
-<!-- Sidebar -->
-<aside class="sidebar">
-    <ul>
-        <li><a href="~/Bacsis/HomeBs">Dashboard</a></li>
-        <li><a href="~/Bacsis/HoSoBN">Hồ sơ bệnh nhân</a></li>
-        <li><a href="~/Bacsis/LichHenKham">Lịch hẹn khám</a></li>
-        <li><a href="@Url.Action("DaXacNhan", "Bacsis")">Đã xác nhận</a></li>
-        <li><a href="@Url.Action("DaHoanThanh", "Bacsis")">Đã hoàn thành</a></li>
-        <li><a href="@Url.Action("DaBiHuy", "Bacsis")">Đã bị hủy</a></li>
-        <li><a href="@Url.Action("ThongBao", "Bacsis")">Thông báo</a></li>
-    </ul>
-</aside>
-
-<!-- Main Content -->
-<main>
-   @RenderBody()
-</main>
+<div class="container-bs">
+    <aside class="sidebar">
+        <ul>
+            <li><a href="~/Bacsis/HomeBs">Dashboard</a></li>
+            <li><a href="~/Bacsis/LichHenKham">Lịch hẹn khám</a></li>
+            <li><a href="@Url.Action("DaXacNhan", "Bacsis")">Đã xác nhận</a></li>
+            <li><a href="@Url.Action("DaHoanThanh", "Bacsis")">Đã hoàn thành</a></li>
+            <li><a href="@Url.Action("DaBiHuy", "Bacsis")">Đã bị hủy</a></li>
+            <li><a href="@Url.Action("ThongBao", "Bacsis")">Thông báo</a></li>
+            <li><a href="@Url.Action("ThongKe", "Bacsis")">Thống kê</a></li>
+        </ul>
+    </aside>
+    <main>
+       @RenderBody()
+    </main>
+</div>
