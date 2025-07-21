@@ -1,0 +1,79 @@
+@{
+    ViewData["Title"] = "HomeBs";
+    Layout = "~/Views/Shared/Bs_Layout.cshtml";
+    <link rel="stylesheet" href="~/css/HomeBs.css" asp-append-version="true" />
+}
+<style>
+#chart {
+    width: 100%;  /* Đặt chiều rộng của biểu đồ chiếm 100% chiều rộng của phần chứa */
+    max-width: calc(100% - 250px); /* Đảm bảo biểu đồ không vượt quá chiều rộng của phần nội dung chính */
+    height: 200px;  /* Đặt chiều cao cố định cho biểu đồ */
+    display: block;
+}
+</style>
+<!-- Thêm Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<span>Tổng Thu nhập: @ViewBag.luong[0][9]</span>
+
+<h2>Thống Kê Cuộc Hẹn Khám</h2>
+
+<!-- Form nhập năm và tháng để thống kê -->
+<form method="get" action="@Url.Action("ThongKe", "Bacsis")">
+    <div class="form-group">
+        <label for="Nam">Chọn Năm:</label>
+        <input type="text" class="form-control" value="2024" id="Nam" name="nam" placeholder="Nhập Năm" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Thống Kê</button>
+</form>
+
+<hr />
+
+<!-- Biểu đồ thống kê -->
+<canvas id="chart"></canvas>
+
+<!-- Hiển thị thông báo nếu không có dữ liệu -->
+@if (ViewBag.list == null || ViewBag.list.Count == 0)
+{
+    <p>Không có dữ liệu thống kê cho năm và tháng này.</p>
+}
+else
+{
+    <script>
+        // Lấy dữ liệu từ ViewBag
+        var data = @Html.Raw(Json.Serialize(ViewBag.list));
+
+        // Tạo một mảng tháng đầy đủ từ 1 đến 12
+        var allMonths = Array.from({length: 12}, (_, i) => i + 1);  // [1, 2, 3, ..., 12]
+        
+        // Tạo mảng chứa số lượng cuộc hẹn cho từng tháng (mặc định là 0)
+        var appointmentCounts = allMonths.map(function(month) {
+            var monthData = data.find(function(item) { return item[0] == month; });
+            return monthData ? monthData[1] : 0;  // Nếu có dữ liệu cho tháng thì lấy, nếu không thì 0
+        });
+
+        // Tạo biểu đồ với Chart.js
+        var ctx = document.getElementById('chart').getContext('2d');
+        var chart = new Chart(ctx, {
+            type: 'bar',  // Biểu đồ cột
+            data: {
+                labels: allMonths.map(function(month) { return 'Tháng ' + month; }),  // Tạo tên tháng
+                datasets: [{
+                    label: 'Số Lượng Cuộc Hẹn',
+                    data: appointmentCounts,  // Số lượng cuộc hẹn cho từng tháng
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',  // Màu nền cho cột
+                    borderColor: 'rgba(54, 162, 235, 1)',  // Màu viền cho cột
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true  // Bắt đầu trục Y từ 0
+                    }
+                }
+            }
+        });
+    </script>
+}

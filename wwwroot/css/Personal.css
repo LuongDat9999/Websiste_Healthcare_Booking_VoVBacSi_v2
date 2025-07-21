@@ -1,0 +1,92 @@
+.slide-img {
+    position: relative;
+    width: 100%;
+    height: 350px;
+    overflow: hidden;
+}
+.slide-img img {
+    width: 100%;
+    height: 100%;
+    object-fit:fill;
+}
+.container-wrapper {
+    position: relative;
+    margin-top: -250px; 
+}
+.form-personal {
+    background-color: rgba(86, 138, 249, 0.124);
+    backdrop-filter: blur(40px);
+    border-radius: 15px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    padding: 20px;
+}
+
+.card {
+    border: none;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    border-radius: 15px;
+    overflow: hidden;
+}
+.card-body {
+    padding: 2rem;
+}
+
+.card-body h3{
+    margin-top: 20px;
+    font-weight: bold;
+    padding: 20px;
+    font-size: 20px;
+    background-color:#0068ab
+    
+}
+.card-body span{
+    font-size: 30px;
+}
+.profile-initials {
+    width: 120px;
+    height: 120px;
+    background-color: #007bff;
+    color: white;
+    font-size: 3rem;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    margin: 0 auto 1rem;
+    
+}
+.profile-picture {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border: 1px solid #fff;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.form-control, .form-select {
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+}
+.form-label {
+    font-weight: 600;
+    color: #495057;
+}
+.card-title {
+    color: #007bff;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    text-transform: uppercase;
+}
+
+.btn-changepass{
+    padding: 5px 15px;  
+    background-color: white;
+    border: 2px solid #007bff;
+    border-radius: 10px;
+    transition: 0.4s;
+}
+.btn-changepass:hover{
+    color: white;
+    background-color: #007bff;
+}

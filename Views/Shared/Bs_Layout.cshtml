@@ -1,0 +1,57 @@
+@{
+    ViewData["Title"] = "Bs_Layout";
+    Layout = null;
+    <link rel="stylesheet" href="~/css/HenLichKham.css" asp-append-version="true" />
+    var tennd = Context.Session.GetString("tennd");
+    
+    // Lời chào theo thời gian
+    var hour = DateTime.Now.Hour;
+    string greeting;
+    if (hour >= 5 && hour < 12)
+    {
+        greeting = "Chào buổi sáng";
+    }
+    else if (hour >= 12 && hour < 18)
+    {
+        greeting = "Chào buổi chiều";
+    }
+    else if (hour >= 18 && hour < 22)
+    {
+        greeting = "Chào buổi tối";
+    }
+    else
+    {
+        greeting = "Chào đêm khuya";
+    }
+}
+
+<header>
+    <div class="logo">
+        <a href="@Url.Action("Index", "Home")">
+            <img src="~/images/logo_vov.png" alt="Logo VinaAI">
+        </a>
+      
+        <span>@greeting Bác Sĩ: @tennd</span>
+    </div>
+    <div class="user-info">
+        <span>@DateTime.Now.ToString("hh:mm:ss tt | dddd, dd MM yyyy")</span>        
+    </div>
+</header>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+    <ul>
+        <li><a href="~/Bacsis/HomeBs">Dashboard</a></li>
+        <li><a href="~/Bacsis/HoSoBN">Hồ sơ bệnh nhân</a></li>
+        <li><a href="~/Bacsis/LichHenKham">Lịch hẹn khám</a></li>
+        <li><a href="@Url.Action("DaXacNhan", "Bacsis")">Đã xác nhận</a></li>
+        <li><a href="@Url.Action("DaHoanThanh", "Bacsis")">Đã hoàn thành</a></li>
+        <li><a href="@Url.Action("DaBiHuy", "Bacsis")">Đã bị hủy</a></li>
+        <li><a href="@Url.Action("ThongBao", "Bacsis")">Thông báo</a></li>
+    </ul>
+</aside>
+
+<!-- Main Content -->
+<main>
+   @RenderBody()
+</main>

@@ -1,0 +1,178 @@
+/* Phong cách tổng quan */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f9f9f9;
+    margin: 0;
+    padding: 0;
+}
+
+/* Thanh tìm kiếm */
+.search-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 12px 20px;
+    background-color: #f0f5ff; /* Màu nền nhẹ nhàng, dễ chịu */
+    border-radius: 50px; /* Bo tròn góc mạnh mẽ */
+    box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.1); /* Đổ bóng nhẹ cho hiệu ứng nổi */
+    max-width: 500px; /* Giới hạn chiều rộng tối đa */
+    margin: 0 auto; /* Canh giữa */
+    transition: all 0.3s ease-in-out;
+}
+
+/* Input tìm kiếm */
+.search-container input {
+    padding: 12px 20px;
+    width: 100%;
+    border: 2px solid #ddd; /* Viền nhẹ, tinh tế */
+    border-radius: 50px; /* Bo tròn các góc */
+    outline: none;
+    font-size: 16px;
+    color: #333;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+/* Khi rê chuột vào input */
+.search-container input:focus {
+    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.2); /* Tạo hiệu ứng focus dễ chịu */
+    border-color: #007bff;
+    border-width: 2px; /* Tăng độ dày viền khi focus */
+}
+
+/* Button tìm kiếm */
+.search-container button {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 50px; /* Bo tròn các góc của nút */
+    background-color: #007bff;
+    color: #fff;
+    cursor: pointer;
+    font-size: 16px;
+    margin-left: 10px; /* Khoảng cách giữa input và button */
+    transition: all 0.3s ease-in-out;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Tạo hiệu ứng bóng cho nút */
+}
+
+/* Khi rê chuột vào button */
+.search-container button:hover {
+    background-color: #0056b3;
+    transform: translateY(-2px); /* Nâng nút lên khi hover */
+}
+
+/* Hiệu ứng khi nhấn button */
+.search-container button:active {
+    background-color: #004292;
+    transform: translateY(2px); /* Hạ nút xuống khi nhấn */
+}
+
+
+
+/* Bảng danh sách hồ sơ */
+.patient-list {
+    margin: 25px;
+    width: 90%;
+}
+
+.patient-list h2 {
+    text-align: center;
+    color: #333;
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+.patient-list table {
+    width: 100%;
+    border-collapse: collapse;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.patient-list th, .patient-list td {
+    padding: 12px;
+    border: 1px solid #ddd;
+    text-align: left;
+    color: #555;
+}
+
+.patient-list th {
+    background-color: #dce9f7;
+    color: #000000;
+}
+
+.patient-list tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+/* Form modal */
+.modal {
+    display: none; /* Ẩn modal mặc định */
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.6);
+}
+
+.modal-content {
+    background-color: #fff;
+    margin: 10% auto;
+    padding: 20px;
+    width: 400px;
+    border-radius: 8px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.modal-content h3 {
+    color: #333;
+    font-size: 20px;
+    text-align: center;
+}
+
+.modal-content label {
+    font-weight: bold;
+    color: #333;
+    margin-top: 10px;
+    display: block;
+}
+
+.modal-content input, .modal-content textarea {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.modal-content button {
+    margin-top: 15px;
+    width: 100%;
+    padding: 10px;
+    background-color: #28a745;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.modal-content button:hover {
+    background-color: #218838;
+}
+
+.close {
+    float: right;
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+    cursor: pointer;
+}
+
+.close:hover {
+    color: #007bff;
+}
