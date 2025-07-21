@@ -16,7 +16,7 @@ using Microsoft.Extensions.Logging;
 
 public class HomeController : Controller
 {
-    
+
     private readonly ILogger<HomeController> _logger;
     private readonly ISession _session;
 
@@ -26,7 +26,8 @@ public class HomeController : Controller
         _session = httpContextAccessor.HttpContext.Session;
     }
 
-    public IActionResult LayoutShare(){
+    public IActionResult LayoutShare()
+    {
         var taikhoan = _session.GetString("taikhoan");
         ViewData["TaiKhoan"] = taikhoan;
 
@@ -44,10 +45,10 @@ public class HomeController : Controller
     public IActionResult Index()
     {
         LayoutShare();
-        DataModel db =new DataModel();
+        DataModel db = new DataModel();
         ViewBag.ListBV = db.get("EXEC getAllBenhVien");
         ViewBag.ListBS5 = db.get("EXEC GetTop7Doctors");
-                
+
         return View();
     }
     public IActionResult Article(string MaBV)
@@ -84,7 +85,7 @@ public class HomeController : Controller
         return View();
     }
 
-    
+
     // ---------- ĐĂNG NHẬP ------------//
     public IActionResult Login()
     {
@@ -109,7 +110,7 @@ public class HomeController : Controller
         }
     }
 
-     // -------- REGISTER ----------//
+    // -------- REGISTER ----------//
     public IActionResult Register()
     {
         LayoutShare();
@@ -149,21 +150,23 @@ public class HomeController : Controller
         DataModel db = new DataModel();
         ViewBag.ListNameDoc = db.get("SELECT MaBS, nd.TenND FROM BACSI bs, NGUOIDUNG nd where bs.MaND = nd.MaND");
         ViewBag.ListDoc = db.get("Exec getAllBacSi");
-        
+
         return View();
     }
     public IActionResult FillterDoctorList(string khuvuc, string phikham, string khoabenh, string hocham)
     {
         LayoutShare();
         DataModel db = new DataModel();
-        if(khuvuc != "Null"){
-            khuvuc = "N'"+ khuvuc +"'";
+        if (khuvuc != "Null")
+        {
+            khuvuc = "N'" + khuvuc + "'";
         }
-        if(hocham != "Null" ){
-            hocham = "N'"+ hocham +"'";
+        if (hocham != "Null")
+        {
+            hocham = "N'" + hocham + "'";
         }
         ViewBag.ListDocFill = db.get($"EXEC FILTER_BACSI {khuvuc}, {phikham}, {khoabenh},  {hocham};");
-        
+
         return View();
     }
     public IActionResult DetailDoctor(string MaBS)
@@ -172,7 +175,7 @@ public class HomeController : Controller
 
         DataModel db = new DataModel();
 
-   
+
         // Sử dụng tham số hóa để tránh lỗi
         ViewBag.ListDBS = db.get($"EXEC DetDETAILlBACSI {MaBS}");
 
@@ -182,12 +185,12 @@ public class HomeController : Controller
     public IActionResult ListDoctor()
     {
         LayoutShare();
-        
+
         return View();
     }
 
     // ----- PERSONAL PAGE ------//
-     public IActionResult PersonalPage()
+    public IActionResult PersonalPage()
     {
         LayoutShare();
         DataModel db = new DataModel();
@@ -206,17 +209,18 @@ public class HomeController : Controller
     }
 
     [HttpPost]
-    public IActionResult UpdateUserInfo(string MaND, string TenND, string Email, 
-                                        string NamSinh, string GioiTinh, 
-                                        string DiaChi, IFormFile Hinhcanhan) 
+    public IActionResult UpdateUserInfo(string MaND, string TenND, string Email,
+                                        string NamSinh, string GioiTinh,
+                                        string DiaChi, IFormFile Hinhcanhan)
     {
         DataModel db = new DataModel();
         int manD = int.Parse(MaND);
-        DateTime parsedDate = DateTime.Parse(NamSinh); 
+        DateTime parsedDate = DateTime.Parse(NamSinh);
         string formattedDate = parsedDate.ToString("yyyy-MM-dd");
 
         string nameFile = "NULL";
-        if(Hinhcanhan != null){
+        if (Hinhcanhan != null)
+        {
             // lấy tên tệp
             nameFile = Path.GetFileName(Hinhcanhan.FileName);
 
@@ -230,7 +234,7 @@ public class HomeController : Controller
                 Hinhcanhan.CopyTo(stream);
             }
         }
- 
+
         db.get($"EXEC UpdateUserInfo {manD}, N'{TenND}', '{Email}', '{formattedDate}', N'{GioiTinh}', N'{DiaChi}', '{nameFile}' ");
 
         return RedirectToAction("PersonalPage", "Home");
@@ -257,7 +261,7 @@ public class HomeController : Controller
 
         return View();
     }
-   [HttpPost]
+    [HttpPost]
     public IActionResult BookExamineProcess(string MaBS, string MoTaBenh, List<IFormFile> HinhAnhBenhs)
     {
         DataModel db = new DataModel();
@@ -272,10 +276,10 @@ public class HomeController : Controller
             ViewBag.MaHS = result[0]; // Lấy dòng đầu tiên của kết quả
         }
         var MaHS = int.Parse(ViewBag.MaHS[0].ToString());
-        
+
         foreach (var file in HinhAnhBenhs)
         {
-             // lấy tên tệp
+            // lấy tên tệp
             string nameFile = Path.GetFileName(file.FileName);
 
             // Đường dẫn để lưu tệp
@@ -287,7 +291,7 @@ public class HomeController : Controller
             {
                 file.CopyTo(stream);
             }
-            
+
             db.get($"EXEC SAVEHINHANHBENH {MaHS}, '{nameFile}'");
         }
 
@@ -300,7 +304,7 @@ public class HomeController : Controller
     public IActionResult ExamineHistory()
     {
         LayoutShare();
-        
+
         var taikhoan = HttpContext.Session.GetString("taikhoan");
         ViewData["TaiKhoan"] = taikhoan;
         var MaND = taikhoan;
@@ -315,7 +319,7 @@ public class HomeController : Controller
     {
         DataModel db = new DataModel();
         ViewBag.List = db.get("EXEC DeleteCHKbyID " + maCHK);
-        
+
         return RedirectToAction("ExamineHistory", "Home");
     }
 
@@ -348,11 +352,95 @@ public class HomeController : Controller
 
         return RedirectToAction("AccountBank", "Home");
     }
-    
-    
+
+
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {
         return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
     }
+
+    // ---------- CHỨC NĂNG ĐỔI MẬT KHẨU ------------//
+    public IActionResult ChangePassword()
+    {
+        LayoutShare();
+        var taikhoan = HttpContext.Session.GetString("taikhoan");
+        
+        if (string.IsNullOrEmpty(taikhoan))
+        {
+            return RedirectToAction("Login", "Home");
+        }
+        
+        ViewData["TaiKhoan"] = taikhoan;
+        return View();
+    }
+    
+    [HttpPost]
+    public IActionResult ChangePasswordProcess(string currentPassword, string newPassword, string confirmPassword)
+    {
+        var taikhoan = HttpContext.Session.GetString("taikhoan");
+        
+        if (string.IsNullOrEmpty(taikhoan))
+        {
+            TempData["ErrorMessage"] = "Vui lòng đăng nhập để thực hiện chức năng này.";
+            return RedirectToAction("Login", "Home");
+        }
+        
+        // Kiểm tra mật khẩu mới và xác nhận mật khẩu
+        if (string.IsNullOrEmpty(newPassword) || newPassword.Length < 6)
+        {
+            TempData["ErrorMessage"] = "Mật khẩu mới phải có ít nhất 6 ký tự.";
+            return RedirectToAction("ChangePassword", "Home");
+        }
+        
+        if (newPassword != confirmPassword)
+        {
+            TempData["ErrorMessage"] = "Mật khẩu xác nhận không khớp.";
+            return RedirectToAction("ChangePassword", "Home");
+        }
+        
+        try
+        {
+            DataModel db = new DataModel();
+            
+            // Kiểm tra mật khẩu hiện tại
+            var parameters = new Dictionary<string, object>
+            {
+                { "@MaND", taikhoan },
+                { "@CurrentPassword", currentPassword }
+            };
+            var checkCurrentPassword = db.ExecuteStoredProcedure("CheckCurrentPassword", parameters);
+            
+            if (checkCurrentPassword == null || checkCurrentPassword.Count == 0)
+            {
+                TempData["ErrorMessage"] = "Mật khẩu hiện tại không đúng.";
+                return RedirectToAction("ChangePassword", "Home");
+            }
+            
+            // Cập nhật mật khẩu mới
+            var updateParameters = new Dictionary<string, object>
+            {
+                { "@MaND", taikhoan },
+                { "@NewPassword", newPassword }
+            };
+            int rowsAffected = db.ExecuteNonQuery("UpdatePassword", updateParameters);
+            
+            if (rowsAffected > 0)
+            {
+                TempData["SuccessMessage"] = "Đổi mật khẩu thành công!";
+                return RedirectToAction("PersonalPage", "Home");
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Không thể cập nhật mật khẩu. Vui lòng thử lại.";
+                return RedirectToAction("ChangePassword", "Home");
+            }
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = "Có lỗi xảy ra: " + ex.Message;
+            return RedirectToAction("ChangePassword", "Home");
+        }
+    }
 }
+

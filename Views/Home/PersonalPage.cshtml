@@ -40,32 +40,80 @@
                                 var user = ViewBag.UserInfo as ArrayList;
                                 if (user != null && user.Count > 1)
                                 {
+                                    <!-- Debug info đã được ẩn để giao diện đẹp hơn -->
                                     <div style="padding: 25px;">
-                                        <img src="~/Uploads/@user[8]" class="img-fluid rounded-circle profile-picture mb-3" alt="Profile Picture">
+                                        @{
+                                            // Kiểm tra tất cả các index có thể chứa hình ảnh
+                                            string imagePath = "";
+                                            for (int i = 0; i < user.Count; i++)
+                                            {
+                                                if (user[i] != null && !string.IsNullOrEmpty(user[i].ToString()) && 
+                                                    user[i].ToString() != "null" && user[i].ToString().Trim() != "" &&
+                                                    (user[i].ToString().Contains(".jpg") || user[i].ToString().Contains(".png") || 
+                                                     user[i].ToString().Contains(".gif") || user[i].ToString().Contains(".jpeg")))
+                                                {
+                                                    imagePath = user[i].ToString();
+                                                    break;
+                                                }
+                                            }
+                                            
+                                            // Nếu không tìm thấy hình ảnh, sử dụng hình mặc định
+                                            if (string.IsNullOrEmpty(imagePath))
+                                            {
+                                                imagePath = "ic_avatar.png"; // Hình mặc định
+                                            }
+                                        }
+                                        
+                                        @if (!string.IsNullOrEmpty(imagePath))
+                                        {
+                                            <img src="~/Uploads/@imagePath" class="img-fluid rounded-circle profile-picture mb-3" alt="Profile Picture" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                            <div class="profile-picture-placeholder mb-3" style="display: none;">
+                                                <i class="fas fa-user"></i>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="profile-picture-placeholder mb-3">
+                                                <i class="fas fa-user"></i>
+                                            </div>
+                                        }
                                         <h2 class="card-subtitle mb-2 text-muted">@user[1]</h2>
-                                        <p class="card-text"style="font-weight: bold; font-size: 20px">Mã giới thiệu: @user[10]</p>
-                                        <button class="btn-changepass">Đổi mật khẩu</button>
+                                        <p class="card-text" style="font-weight: bold; font-size: 16px; color: #007bff;">
+                                            <i class="fas fa-id-card"></i> Mã giới thiệu: @(user.Count > 10 ? user[10] : "N/A")
+                                        </p>
+                                        <a href="@Url.Action("ChangePassword", "Home")" class="btn-changepass">
+                                            <i class="fas fa-key"></i> Đổi mật khẩu
+                                        </a>
                                     </div>
-                                    <h3 style="color: white;">
+                                    <div class="balance-section">
                                         @{
                                             // Định dạng số tiền đẹp hơn
-                                            var amount = Convert.ToInt32(user[9]);
+                                            var amount = user.Count > 9 ? Convert.ToInt32(user[9]) : 0;
                                             var SoTien = amount.ToString("#,##0");  
                                         }
-                                        Số dư:
-                                        <span style="color: #fff003;">
-                                            @SoTien đ
-                                        </span>
-                                    </h3>
+                                        <h3 style="color: white; margin-bottom: 5px;">
+                                            <i class="fas fa-wallet"></i> Số dư tài khoản
+                                        </h3>
+                                        <div class="balance-amount">
+                                            <span style="color: #fff003; font-size: 24px; font-weight: bold;">
+                                                @SoTien đ
+                                            </span>
+                                        </div>
+                                    </div>
                                 }
                             }
                     </div>
                 </div>
             </div>
             <div class="col-md-8">
-                <div class="card h-100 " style="min-width: 100%">
-                    <div class="card-body ">
-                        <h2 class="card-title">Thông tin cá nhân</h2>
+                <div class="card h-100" style="min-width: 100%">
+                    <div class="card-body">
+                        <div class="form-header">
+                            <h2 class="card-title">
+                                <i class="fas fa-user-edit"></i> Thông tin cá nhân
+                            </h2>
+                            <p class="text-muted">Cập nhật thông tin cá nhân của bạn</p>
+                        </div>
                         <form asp-controller="Home" asp-action="UpdateUserInfo" method="post" enctype="multipart/form-data">
                             @if (ViewBag.UserInfo != null)
                             {
@@ -79,29 +127,25 @@
                                     </div>
                                     <div class="mb-3">
                                         <label for="email" class="form-label">Email:</label>
-                                        <input type="text" class="form-control" id="email" value="@user[3]" name="Email">
+                                        <input type="text" class="form-control" id="email" value="@(user.Count > 3 ? user[3] : "")" name="Email">
                                     </div>
-                                    @if (user[6] != null && DateTime.TryParse(user[6].ToString(), out DateTime birthDate))
-                                    {
-                                        var formattedDate = birthDate.ToString("yyyy-MM-dd"); // Định dạng yyyy-MM-dd
-
-                                        <div class="mb-3">
-                                            <label for="birthYear" class="form-label">Năm sinh:</label>
+                                    <div class="mb-3">
+                                        <label for="birthYear" class="form-label">Năm sinh:</label>
+                                        @if (user.Count > 6 && user[6] != null && !string.IsNullOrEmpty(user[6].ToString()) && user[6].ToString() != "1900-01-01" && DateTime.TryParse(user[6].ToString(), out DateTime birthDate))
+                                        {
+                                            var formattedDate = birthDate.ToString("yyyy-MM-dd");
                                             <input type="date" class="form-control" id="birthYear" name="NamSinh" value="@formattedDate" />
-                                        </div>
-                                    }
-                                    else
-                                    {
-                                        <div class="mb-3">
-                                            <label for="birthYear" class="form-label">Năm sinh:</label>
+                                        }
+                                        else
+                                        {
                                             <input type="date" class="form-control" id="birthYear" name="NamSinh" />
-                                        </div>
-                                    }
+                                        }
+                                    </div>
 
                                     <div class="mb-3">
                                         <label for="gender" class="form-label">Giới tính:</label>
                                         <select class="form-select" id="gender" name="GioiTinh">
-                                            <option selected>@user[7]</option>
+                                            <option selected>@(user.Count > 7 ? user[7] : "Không xác định")</option>
                                             <option value="Nam">Nam</option>
                                             <option value="Nữ">Nữ</option>
                                             <option value="Khác">Khác</option>
@@ -109,19 +153,22 @@
                                     </div>
                                     <div class="mb-3">
                                         <label for="address" class="form-label">Địa chỉ:</label>
-                                        <input type="text" class="form-control" id="address" value="@user[5]" name="DiaChi">
+                                        <input type="text" class="form-control" id="address" value="@(user.Count > 5 ? user[5] : "")" name="DiaChi">
                                     </div>
                                     <div class="mb-3">
                                         <label for="phone" class="form-label">Số điện thoại:</label>
-                                        <input type="tel" class="form-control" id="phone" value="@user[4]" name="SDT">
+                                        <input type="tel" class="form-control" id="phone" value="@(user.Count > 4 ? user[4] : "")" name="SDT">
                                     </div>
 
                                     <div class="mb-3">
                                         <label for="avar" class="form-label">Ảnh cá nhân:</label>
-                                        <input type="file" class="form-control" id="avar" name="Hinhcanhan">
+                                        <input type="file" class="form-control" id="avar" name="Hinhcanhan" accept="image/*">
+                                        <small class="form-text text-muted">Chỉ chấp nhận file hình ảnh (JPG, PNG, GIF)</small>
                                     </div>
 
-                                    <button type="submit" class="btn btn-primary">Cập nhật</button>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> Cập nhật thông tin
+                                    </button>
                                 }
                             }
                         </form>
@@ -131,42 +178,141 @@
         </div>
     </div>
 </div>
-<div id="success-message" style="display: none; margin-top: 20px; color: green; font-weight: bold;">
-    Đã cập nhật thành công!
-</div>
+
+<!-- Thông báo thành công -->
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert" style="margin-top: 20px;">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- Thông báo lỗi -->
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert" style="margin-top: 20px;">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<style>
+    .form-header {
+        text-align: center;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #f8f9fa;
+    }
+    
+    .form-header h2 {
+        color: #007bff;
+        margin-bottom: 10px;
+    }
+    
+    .form-header i {
+        margin-right: 10px;
+        color: #007bff;
+    }
+    
+    .balance-section {
+        text-align: center;
+        padding: 20px;
+        background: linear-gradient(135deg, #007bff, #0056b3);
+        border-radius: 10px;
+        margin-top: 20px;
+    }
+    
+    .balance-amount {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 10px;
+    }
+    
+    .card-subtitle {
+        color: #6c757d !important;
+        font-size: 18px;
+        margin-bottom: 15px;
+    }
+    
+    .btn-changepass {
+        margin-top: 15px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-changepass:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3);
+    }
+    
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+    
+    .btn-primary {
+        background: linear-gradient(45deg, #007bff, #0056b3);
+        border: none;
+        border-radius: 8px;
+        padding: 12px 30px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4);
+    }
+    
+    .profile-picture {
+        border: 4px solid #fff;
+        box-shadow: 0 0 20px rgba(0, 123, 255, 0.2);
+        transition: all 0.3s ease;
+    }
+    
+    .profile-picture:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 30px rgba(0, 123, 255, 0.3);
+    }
+</style>
 
 <script>
-    
-
-    function formatDate(dateStr) {
-        const date = new Date(dateStr);
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0'); // Tháng bắt đầu từ 0
-        const year = date.getFullYear();
-        return `${day}/${month}/${year}`;
-    }
-
-
-    document.getElementById('birthYear').value = formatDate(rawDate);
-    
     document.addEventListener("DOMContentLoaded", function () {
-        // Lấy form và phần tử hiển thị thông báo
-        const form = document.querySelector("form[asp-action='UpdateUserInfo']");
-        const successMessage = document.getElementById("success-message");
-
-        form.addEventListener("submit", function (event) {
-            // Ngăn form gửi request ngay lập tức
-            event.preventDefault();
-
-            // Hiển thị thông báo
-            successMessage.style.display = "block";
-
-            // Gửi form sau khi thông báo hiển thị xong (3 giây)
-            setTimeout(() => {
-                successMessage.style.display = "none";
-                form.submit(); // Gửi form sau khi thông báo biến mất
-            }, 3000);
+        // Validate file upload
+        const fileInput = document.getElementById('avar');
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Kiểm tra kích thước file (max 5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('File quá lớn! Vui lòng chọn file nhỏ hơn 5MB.');
+                    this.value = '';
+                    return;
+                }
+                
+                // Kiểm tra loại file
+                const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+                if (!allowedTypes.includes(file.type)) {
+                    alert('Chỉ chấp nhận file hình ảnh (JPG, PNG, GIF)!');
+                    this.value = '';
+                    return;
+                }
+            }
+        });
+        
+        // Thêm hiệu ứng loading cho form
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function() {
+            const submitBtn = this.querySelector('button[type="submit"]');
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang cập nhật...';
+            submitBtn.disabled = true;
         });
     });
-
-</scrip>
+</script>
