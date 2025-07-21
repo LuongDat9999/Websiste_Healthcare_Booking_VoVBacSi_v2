@@ -203,14 +203,34 @@ public class BacsisController : Controller
         ViewBag.choXacNhan = db.get($"EXEC Xemtatcalichhenchuaxacnhan {idBS}");
         return View();  
     }
-    public IActionResult ThongKe(string nam, string loaiBieuDo = "bar")
+    public IActionResult ThongKe(string nam, string loaiBieuDo = "line")
     {
         var userId = _session.GetString("userId");
-
         ViewBag.luong = db.get("exec sp_XemThongTinNguoiDung " + userId);
         ViewBag.list = db.get("EXEC ThongKeCuocHenTheoThang '" + userId + "','" + nam + "'");
         ViewBag.loaiBieuDo = loaiBieuDo;
         ViewBag.nam = nam;
+        // 1. Lấy ID Bác sĩ từ UserId
+        ArrayList idBS_sql = db.get($"EXEC GetMaBSByUserId @UserId = '{userId}'");
+        ArrayList row = (ArrayList)idBS_sql[0];
+        int idBS = int.Parse(row[0].ToString());
+
+        // 3. Lấy thống kê trong năm
+        var listHT = db.get("SELECT COUNT(*) FROM CUOCHENKHAM WHERE MaBS = '"+ idBS +"' AND MaTTCH = 4 AND YEAR(ThoiGianHen) = '"+ nam +"'");
+        var listHuy = db.get("SELECT COUNT(*) FROM CUOCHENKHAM WHERE MaBS = '"+ idBS +"' AND MaTTCH = 3 AND YEAR(ThoiGianHen) = '"+ nam +"'");
+        var tongTienList = db.get("SELECT ISNULL(SUM(SoTienTT), 0) FROM CUOCHENKHAM WHERE MaBS = '"+idBS+"' AND YEAR(ThoiGianHen) = '"+ nam +"'");
+
+        int soHoanThanh = 0, soHuy = 0, tongTienValue = 0;
+        if (listHT != null && listHT.Count > 0 && listHT[0] is System.Collections.IList rowHT)
+            int.TryParse(rowHT[0]?.ToString(), out soHoanThanh);
+        if (listHuy != null && listHuy.Count > 0 && listHuy[0] is System.Collections.IList rowHuy)
+            int.TryParse(rowHuy[0]?.ToString(), out soHuy);
+        if (tongTienList != null && tongTienList.Count > 0 && tongTienList[0] is System.Collections.IList rowTien)
+            int.TryParse(rowTien[0]?.ToString(), out tongTienValue);
+
+        ViewBag.SoHoanThanh = soHoanThanh;
+        ViewBag.SoHuy = soHuy;
+        ViewBag.TongTien = tongTienValue;
         return View("ThongKe");
     }
 
@@ -268,7 +288,9 @@ public class BacsisController : Controller
      public ActionResult DaHoanThanh()
     {
         var userId = _session.GetString("userId");
+        ViewBag.luong = db.get("exec sp_XemThongTinNguoiDung " + userId);
         ViewBag.list = db.get("EXEC GetAllCuocHenByMaNDDaHT "  + userId);
+        ViewBag.SoLuongHoanThanh = ViewBag.list != null ? ((System.Collections.ICollection)ViewBag.list).Count : 0;
         return View();
     }
 
@@ -276,6 +298,7 @@ public class BacsisController : Controller
     {
          var userId = _session.GetString("userId");
         ViewBag.list = db.get("EXEC GetAllCuocHenByMaNDDaHuy "  + userId);
+        ViewBag.SoLuongHuy = ViewBag.list != null ? ((System.Collections.ICollection)ViewBag.list).Count : 0;
         return View();
     }
 
@@ -284,7 +307,7 @@ public class BacsisController : Controller
     {
          // Lấy thời gian hiện tại
         db.get("Exec UpdateMaTTCH "+ id +"," + matt);
-        return RedirectToAction("LichHenKham","Bacsis");
+        return RedirectToAction("HomeBs","Bacsis");
     }
 
     [HttpPost]
@@ -293,7 +316,7 @@ public class BacsisController : Controller
         var userId = _session.GetString("userId");
         db.get("Exec UpdateMaTTCH "+ id +"," + matt);
         db.get("Exec UpdateSoDuTKForUserAndDoctor "+ userId +"," + id);
-        return RedirectToAction("LichHenKham","Bacsis");
+        return RedirectToAction("DaHoanThanh","Bacsis");
     }
      public ActionResult DoanhThu()
     {
@@ -360,4 +383,58 @@ public class BacsisController : Controller
         return Json(notifications);
     }
 
+    public IActionResult ChiTietHoSoBN(int id)
+    {
+        // Lấy thông tin chi tiết hồ sơ bệnh nhân theo id (id là MaHS)
+        var hoSo = db.get($"SELECT h.MaHS, n.TenND, n.NgaySinh, n.GioiTinh, n.sdt, n.DiaChi, h.MoTaBenh, h.MaND FROM HOSO h JOIN NGUOIDUNG n ON h.MaND = n.MaND WHERE h.MaHS = {id}");
+        ViewBag.HoSo = hoSo;
+        return View();
+    }
+
+    public IActionResult QuanLyCaNhan()
+    {
+        var userId = _session.GetString("userId");
+        var info = db.get($"SELECT * FROM NGUOIDUNG WHERE MaND = {userId}");
+        ViewBag.Info = info != null && info.Count > 0 ? info[0] : null;
+        return View();
+    }
+
+    [HttpGet]
+    public IActionResult CapNhatCaNhan()
+    {
+        var userId = _session.GetString("userId");
+        var info = db.get($"SELECT * FROM NGUOIDUNG WHERE MaND = {userId}");
+        ViewBag.Info = info != null && info.Count > 0 ? info[0] : null;
+        return View();
+    }
+
+    [HttpPost]
+    public IActionResult CapNhatCaNhan(string TenND, string Email, string sdt, string DiaChi, string NgaySinh, string GioiTinh, IFormFile AnhCaNhan)
+    {
+        var userId = _session.GetString("userId");
+        string fileName = null;
+        if (AnhCaNhan != null && AnhCaNhan.Length > 0)
+        {
+            fileName = Path.GetFileName(AnhCaNhan.FileName);
+            var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Uploads", fileName);
+            using (var stream = new FileStream(path, FileMode.Create))
+            {
+                AnhCaNhan.CopyTo(stream);
+            }
+        }
+        string sql = $"UPDATE NGUOIDUNG SET TenND = N'{TenND}', Email = '{Email}', sdt = '{sdt}', DiaChi = N'{DiaChi}', NgaySinh = '{NgaySinh}', GioiTinh = N'{GioiTinh}'";
+        if (!string.IsNullOrEmpty(fileName))
+        {
+            sql += $", AnhCaNhan = '{fileName}'";
+        }
+        sql += $" WHERE MaND = {userId}";
+        db.get(sql);
+        return RedirectToAction("QuanLyCaNhan", "Bacsis");
+    }
+
+    public IActionResult DangXuat()
+    {
+        _session.Clear();
+        return RedirectToAction("Index", "Bacsis");
+    }
 }

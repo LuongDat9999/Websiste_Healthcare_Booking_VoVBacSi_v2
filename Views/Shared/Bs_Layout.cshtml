@@ -26,15 +26,16 @@
 }
 
 <header>
-    <div class="logo">
-        <a href="@Url.Action("Index", "Home")">
-            <img src="~/images/logo_vov.png" alt="Logo VinaAI">
-        </a>
-      
-        <span>@greeting Bác Sĩ: @tennd</span>
-    </div>
-    <div class="user-info">
-        <span>@DateTime.Now.ToString("hh:mm:ss tt | dddd, dd MM yyyy")</span>        
+    <div style="display:flex; justify-content:center; align-items:center; background:#8FB2C5; border-radius:18px; box-shadow:0 2px 12px rgba(2,136,209,0.08); padding:5px 32px; margin: 0 auto; max-width: 700px;">
+        <div class="logo" style="margin-right:32px;">
+            <a href="@Url.Action("Index", "Home")">
+                <img src="~/images/logo_vov.png" alt="Logo VinaAI">
+            </a>
+            <span>@greeting Bác Sĩ: @tennd</span>
+        </div>
+        <div class="user-info">
+            <span>@DateTime.Now.ToString("hh:mm:ss tt | dddd, dd MM yyyy")</span>        
+        </div>
     </div>
 </header>
 
@@ -42,12 +43,11 @@
     <aside class="sidebar">
         <ul>
             <li><a href="~/Bacsis/HomeBs">Dashboard</a></li>
-            <li><a href="~/Bacsis/LichHenKham">Lịch hẹn khám</a></li>
-            <li><a href="@Url.Action("DaXacNhan", "Bacsis")">Đã xác nhận</a></li>
             <li><a href="@Url.Action("DaHoanThanh", "Bacsis")">Đã hoàn thành</a></li>
             <li><a href="@Url.Action("DaBiHuy", "Bacsis")">Đã bị hủy</a></li>
             <li><a href="@Url.Action("ThongBao", "Bacsis")">Thông báo</a></li>
-            <li><a href="@Url.Action("ThongKe", "Bacsis")">Thống kê</a></li>
+            <li><a href="@Url.Action("ThongKe", "Bacsis")?nam=@DateTime.Now.Year&loaiBieuDo=line">Thống kê</a></li>
+            <li><a href="@Url.Action("QuanLyCaNhan", "Bacsis")">Quản lý cá nhân</a></li>
         </ul>
     </aside>
     <main>
