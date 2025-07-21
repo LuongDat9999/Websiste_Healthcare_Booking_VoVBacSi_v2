@@ -193,15 +193,19 @@ public class BacsisController : Controller
     public IActionResult HomeBs()
     {
         var userId = _session.GetString("userId");
-        ViewBag.luong = db.get("exec sp_XemThongTinNguoiDung "+userId);
+        ViewBag.luong = db.get("exec sp_XemThongTinNguoiDung " + userId);
+        ViewBag.daXacNhan = db.get($"EXEC Xemtatcalichhendaxacnhan {userId}");
+        ViewBag.choXacNhan = db.get($"EXEC Xemtatcalichhenchuaxacnhan {userId}");
         return View();  
     }
-    public IActionResult ThongKe(string nam)
+    public IActionResult ThongKe(string nam, string loaiBieuDo = "bar")
     {
         var userId = _session.GetString("userId");
-        ViewBag.luong = db.get("exec sp_XemThongTinNguoiDung "+userId);
-        ViewBag.list = db.get("EXEC ThongKeCuocHenTheoThang " +  userId +","+ nam );
-        return View("HomeBs");
+        ViewBag.luong = db.get("exec sp_XemThongTinNguoiDung " + userId);
+        ViewBag.list = db.get("EXEC ThongKeCuocHenTheoThang '" + userId + "','" + nam + "'");
+        ViewBag.loaiBieuDo = loaiBieuDo;
+        ViewBag.nam = nam;
+        return View("ThongKe");
     }
 
     public IActionResult DKTC(){
