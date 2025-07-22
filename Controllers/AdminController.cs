@@ -66,6 +66,10 @@ namespace DAPMBSVOV.Controllers
             var totalRevenue = int.Parse(rowdt[0].ToString());
             ViewBag.TotalRevenue = totalRevenue;
 
+            // Tổng thu nhập (30% của tổng doanh thu)
+            var totalIncome = (int)(totalRevenue * 0.3);
+            ViewBag.TotalIncome = totalIncome;
+
             // Tổng lịch hẹn đã hoàn thành
             ArrayList slht_sql = db.get($"SELECT COUNT(*) FROM CUOCHENKHAM WHERE MaTTCH = 4");
             ArrayList rowht = (ArrayList)slht_sql[0];
@@ -827,12 +831,26 @@ namespace DAPMBSVOV.Controllers
         }
 
         [HttpPost]       
-        public IActionResult HoanPhiKham(string matt)
+        public IActionResult HoanPhiKham(string mathanhtoan, string refundReason)
         {
             var redirect = RedirectIfNotLoggedIn();
             if (redirect != null) return redirect;
             DataModel db = new DataModel();
-            ViewBag.list = db.get("EXEC HoanPhiKham " +matt);
+            try
+            {
+                // Gọi stored procedure mới với lý do hoàn phí
+                var parameters = new Dictionary<string, object>
+                {
+                    { "@MaTT", mathanhtoan },
+                    { "@RefundReason", refundReason ?? "" }
+                };
+                db.ExecuteStoredProcedure("HoanPhiKham", parameters);
+                TempData["Message"] = "Hoàn phí thành công!";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Lỗi hoàn phí: " + ex.Message;
+            }
             return RedirectToAction("DSThanhToan", "Admin");
         }
 

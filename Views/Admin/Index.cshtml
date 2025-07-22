@@ -4,6 +4,7 @@
     var totalDoctors = ViewBag.TotalDoctors ?? "0";
     var totalRevenue = ViewBag.TotalRevenue ?? "0";
     var totalCompleted = ViewBag.TotalCompleted ?? "0";
+    var totalIncome = ViewBag.TotalIncome ?? "0";
     var chartData = ViewBag.ChartData ?? "[]";
     var selectedYear = ViewBag.SelectedYear ?? DateTime.Now.Year;
     var years = ViewBag.Years as System.Collections.IEnumerable;
@@ -34,6 +35,9 @@
     .dashboard-card.bg-users { background:#f8b500; }
     .dashboard-card.bg-doctors { background: linear-gradient(90deg,#e0f7fa 60%,#b2ebf2 100%); }
     .dashboard-card.bg-completed { background: linear-gradient(90deg,#ffeaea 60%,#fff 100%); }
+    .dashboard-card.bg-income { background: #e3fcec; border: 2px solid #43a047; }
+    .dashboard-card.bg-income .label { color: #43a047; }
+    .dashboard-card.bg-income .value { color: #1b5e20; }
     .dashboard-section { background: #fff; border-radius: 18px; box-shadow: 0 4px 24px rgba(2,136,209,0.10); padding: 36px 32px 28px 32px; margin-bottom: 32px; }
     .dashboard-section h2 { color: #0288d1; font-size: 1.5rem; font-weight: 700; margin-bottom: 24px; text-align: left; }
     .table-top-doctors th, .table-top-doctors td { vertical-align: middle; }
@@ -52,9 +56,14 @@
         <div class="label"><i class="fas fa-money-bill me-2"></i>Tổng doanh thu</div>
         <div class="value">@String.Format("{0:#,##0}", totalRevenue) <span class="unit">VNĐ</span></div>
     </div>
+    
     <div class="dashboard-card bg-completed">
         <div class="label"><i class="fas fa-calendar-check me-2"></i>Tổng lịch hẹn hoàn thành</div>
         <div class="value">@totalCompleted</div>
+    </div>
+    <div class="dashboard-card bg-income">
+        <div class="label"><i class="fas fa-piggy-bank me-2"></i>Tổng thu nhập (30%)</div>
+        <div class="value">@String.Format("{0:#,##0}", totalIncome) <span class="unit">VNĐ</span></div>
     </div>
 </div>
 <div class="dashboard-section">

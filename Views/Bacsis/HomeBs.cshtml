@@ -14,6 +14,10 @@
     var tongDangKham = ViewBag.daXacNhan != null ? ((System.Collections.ICollection)ViewBag.daXacNhan).Count : 0;
 }
 <div style="display:flex; gap:32px; margin-bottom:32px; flex-wrap:wrap;">
+    <div class="section-card" style="max-width:320px; min-width:220px; flex:1; text-align:left; background-color:#f2ffe6; border:2px solid #388e3c;">
+        <span style="font-size:1.1rem; color:#388e3c; font-weight:600;">Tổng thu nhập</span><br />
+        <span style="font-size:2.1rem; color:#2e7d32; font-weight:700;">@tongThuNhapStr <span style="font-size:1.1rem; color:#388e3c;">VNĐ</span></span>
+    </div>
     <div class="section-card" style="max-width:320px; min-width:220px; flex:1; text-align:left;">
         <span style="font-size:1.1rem; color:#0288d1; font-weight:600;">Tổng chờ khám</span><br />
         <span style="font-size:2rem; color:#01579b; font-weight:700;">@tongChoKham</span>
@@ -22,15 +26,11 @@
         <span style="font-size:1.1rem; color:#0288d1; font-weight:600;">Tổng đang khám</span><br />
         <span style="font-size:2rem; color:#01579b; font-weight:700;">@tongDangKham</span>
     </div>
-    <div class="section-card" style="max-width:320px; min-width:220px; flex:1; text-align:left;background-color:#F2A350;">
-        <span style="font-size:1.1rem; color:#F2E250; font-weight:600;">Tổng Thu nhập</span><br />
-        <span style="font-size:2.1rem; color:#F2E250; font-weight:700;">@tongThuNhapStr <span style="font-size:1.1rem; color:#F2E250;">VNĐ</span></span>
-    </div>
 </div>
 <h2 style="text-align:left;">Danh sách chờ khám</h2>
 @if (ViewBag.choXacNhan == null || ViewBag.choXacNhan.Count == 0)
 {
-    <p>Không có lịch hẹn chờ xác nhận.</p>
+    <p class="no-data-msg">Không có lịch hẹn chờ xác nhận.</p>
 }
 else
 {

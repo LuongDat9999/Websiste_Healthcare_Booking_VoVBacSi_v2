@@ -312,3 +312,136 @@ ADD CONSTRAINT FK_NGUOIDUNG_LICHSUHD_NGUOIDUNG FOREIGN KEY([MaND]) REFERENCES [N
 ALTER TABLE [NGUOIDUNG_LICHSUHD] 
 ADD CONSTRAINT FK_NGUOIDUNG_LICHSUHD_LICHSUHD FOREIGN KEY([MaLS]) REFERENCES [LICHSUHD]([MaLS]);
 
+-- Bổ sung cột hoàn phí vào bảng THANHTOAN nếu chưa có
+IF COL_LENGTH('THANHTOAN', 'IsRefunded') IS NULL
+    ALTER TABLE THANHTOAN ADD IsRefunded BIT NOT NULL DEFAULT 0;
+IF COL_LENGTH('THANHTOAN', 'RefundReason') IS NULL
+    ALTER TABLE THANHTOAN ADD RefundReason NVARCHAR(200) NULL;
+IF COL_LENGTH('THANHTOAN', 'RefundDate') IS NULL
+    ALTER TABLE THANHTOAN ADD RefundDate DATETIME NULL;
+GO
+
+-- Xóa procedure cũ nếu có
+IF OBJECT_ID('HoanPhiKham', 'P') IS NOT NULL
+    DROP PROCEDURE HoanPhiKham;
+GO
+
+-- Tạo lại procedure hoàn phí khám
+CREATE PROCEDURE HoanPhiKham
+    @MaTT INT,
+    @RefundReason NVARCHAR(200) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @MaND INT, @SoTien INT, @IsRefunded BIT;
+    SELECT @MaND = MaND, @SoTien = SoTien, @IsRefunded = IsRefunded FROM THANHTOAN WHERE MaTT = @MaTT;
+    IF @IsRefunded = 1
+    BEGIN
+        RAISERROR(N'Giao dịch đã hoàn phí trước đó!', 16, 1);
+        RETURN;
+    END
+    -- Cộng lại tiền cho user
+    UPDATE NGUOIDUNG SET SoDuTK = SoDuTK + @SoTien WHERE MaND = @MaND;
+    -- Đánh dấu đã hoàn phí, ghi lý do và ngày
+    UPDATE THANHTOAN SET IsRefunded = 1, RefundReason = @RefundReason, RefundDate = GETDATE() WHERE MaTT = @MaTT;
+END
+GO
+
+-- Xóa procedure cũ nếu có
+IF OBJECT_ID('LayDanhSachThanhToan', 'P') IS NOT NULL
+    DROP PROCEDURE LayDanhSachThanhToan;
+GO
+
+CREATE PROCEDURE LayDanhSachThanhToan 
+AS 
+BEGIN 
+    SET NOCOUNT ON; 
+    
+    SELECT  
+        tt.MaTT,                             -- Mã thanh toán 
+        tt.NgayTT,                           -- Ngày thanh toán 
+        tt.SoTien,                           -- Số tiền 
+        nd.TenND,                            -- Tên người dùng 
+        ck.ThoiGianHen AS ChiTraHenKhamLuc,  -- Thời gian hẹn khám 
+        tt.RefundReason,                     -- Lý do hoàn phí 
+        tt.RefundDate                        -- Ngày hoàn phí 
+    FROM  
+        THANHTOAN tt 
+    JOIN  
+        NGUOIDUNG nd ON tt.MaND = nd.MaND    -- Kết nối với bảng người dùng 
+    LEFT JOIN  
+        CUOCHENKHAM ck ON tt.MaCHK = ck.MaCHK  -- Kết nối với bảng cuộc hẹn khám 
+END 
+GO
+
+-- Xóa procedure cũ nếu có
+IF OBJECT_ID('UpdateSoDuTKForUserAndDoctor', 'P') IS NOT NULL
+    DROP PROCEDURE UpdateSoDuTKForUserAndDoctor;
+GO
+
+CREATE PROCEDURE UpdateSoDuTKForUserAndDoctor 
+    @MaND INT,   -- Mã người dùng của bác sĩ 
+    @MaCHK INT    -- Mã cuộc hẹn cần cập nhật 
+AS 
+BEGIN 
+    DECLARE @MaBS INT;           -- Mã bác sĩ 
+    DECLARE @SoTienKham INT;     -- Số tiền khám của bác sĩ 
+    DECLARE @SoDuTK_BN INT;      -- Số dư tài khoản của bệnh nhân 
+    DECLARE @SoDuTK_BS INT;      -- Số dư tài khoản của bác sĩ 
+    DECLARE @MaNDBN INT;         -- Mã người dùng của bệnh nhân
+
+    -- Lấy mã bác sĩ từ bảng BACSI dựa trên MaND (bác sĩ) 
+    SELECT TOP 1 @MaBS = MaBS 
+    FROM BACSI 
+    WHERE MaND = @MaND; 
+
+    -- Lấy số tiền khám của bác sĩ 
+    SELECT TOP 1 @SoTienKham = SoTienKham 
+    FROM BACSI 
+    WHERE MaBS = @MaBS; 
+
+    -- Lấy mã người dùng của bệnh nhân từ cuộc hẹn
+    SELECT @MaNDBN = MaND FROM CUOCHENKHAM WHERE MaCHK = @MaCHK;
+
+    -- Lấy số dư tài khoản của bệnh nhân 
+    SELECT @SoDuTK_BN = SoDuTK 
+    FROM NGUOIDUNG 
+    WHERE MaND = @MaNDBN; 
+
+    -- Lấy số dư tài khoản của bác sĩ 
+    SELECT @SoDuTK_BS = SoDuTK 
+    FROM NGUOIDUNG 
+    WHERE MaND = @MaND; 
+
+    -- Cập nhật lại số dư tài khoản của bệnh nhân (trừ số tiền khám) 
+    UPDATE NGUOIDUNG 
+    SET SoDuTK = @SoDuTK_BN - @SoTienKham 
+    WHERE MaND = @MaNDBN; 
+
+    -- Cập nhật lại số dư tài khoản của bác sĩ (thêm số tiền khám * 70%) 
+    UPDATE NGUOIDUNG 
+    SET SoDuTK = @SoDuTK_BS + (@SoTienKham * 0.7) 
+    WHERE MaND = @MaND; 
+
+    -- Cập nhật lại số tiền thanh toán của cuộc hẹn đó 
+    UPDATE CUOCHENKHAM 
+    SET SoTienTT = @SoTienKham 
+    WHERE MaCHK = @MaCHK; 
+
+    -- Cập nhật lại số TT của cuộc hẹn khám nếu MaTTCH = 4 thì đặt lại là 0, còn lại trừ 1 
+    UPDATE CUOCHENKHAM 
+    SET SoTT = CASE 
+                WHEN MaTTCH = 4 THEN 0 
+                ELSE SoTT - 1 
+               END 
+    WHERE MaCHK = @MaCHK AND MaBS = @MaBS; 
+
+    -- Thêm thông tin thanh toán vào bảng THANHTOAN nếu chưa có
+    IF NOT EXISTS (SELECT 1 FROM THANHTOAN WHERE MaCHK = @MaCHK)
+    BEGIN
+        INSERT INTO THANHTOAN (MaND, SoTien, NgayTT, MaCHK)
+        VALUES (@MaNDBN, @SoTienKham, GETDATE(), @MaCHK);
+    END
+END;
+GO
+

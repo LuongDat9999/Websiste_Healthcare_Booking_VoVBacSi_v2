@@ -29,6 +29,17 @@ public class BacsisController : Controller
     DataModel db = new DataModel();
     public IActionResult Index()
     {
+        var userId = _session.GetString("userId");
+        DataModel db = new DataModel();
+        // Tổng doanh thu của bác sĩ (tất cả năm)
+        var revenueList = db.get($"SELECT ISNULL(SUM(SoTienTT),0) FROM CUOCHENKHAM WHERE MaBS = (SELECT MaBS FROM BACSI WHERE MaND = {userId}) AND MaTTCH = 4");
+        int totalRevenue = 0;
+        if (revenueList != null && revenueList.Count > 0 && revenueList[0] is System.Collections.IList rowRevenue)
+            int.TryParse(rowRevenue[0]?.ToString(), out totalRevenue);
+        ViewBag.TotalRevenue = totalRevenue;
+        // Tổng thu nhập (70% doanh thu)
+        int totalIncome = (int)(totalRevenue * 0.7);
+        ViewBag.TotalIncome = totalIncome;
         return View();
     }
 
@@ -357,6 +368,9 @@ public class BacsisController : Controller
     public IActionResult ThongKe(string nam, string loaiBieuDo = "line")
     {
         var userId = _session.GetString("userId");
+        
+        
+
         ViewBag.luong = db.get("exec sp_XemThongTinNguoiDung " + userId);
         ViewBag.list = db.get("EXEC ThongKeCuocHenTheoThang '" + userId + "','" + nam + "'");
         ViewBag.loaiBieuDo = loaiBieuDo;
@@ -371,17 +385,22 @@ public class BacsisController : Controller
         var listHuy = db.get("SELECT COUNT(*) FROM CUOCHENKHAM WHERE MaBS = '"+ idBS +"' AND MaTTCH = 3 AND YEAR(ThoiGianHen) = '"+ nam +"'");
         var tongTienList = db.get("SELECT ISNULL(SUM(SoTienTT), 0) FROM CUOCHENKHAM WHERE MaBS = '"+idBS+"' AND YEAR(ThoiGianHen) = '"+ nam +"'");
 
-        int soHoanThanh = 0, soHuy = 0, tongTienValue = 0;
+        var doanhThuList = db.get($"SELECT ISNULL(SUM(SoTienTT), 0) FROM CUOCHENKHAM WHERE MaBS = {idBS} AND MaTTCH = 4");
+
+        int soHoanThanh = 0, soHuy = 0, tongTienValue = 0, doanhthuValue = 0;
         if (listHT != null && listHT.Count > 0 && listHT[0] is System.Collections.IList rowHT)
             int.TryParse(rowHT[0]?.ToString(), out soHoanThanh);
         if (listHuy != null && listHuy.Count > 0 && listHuy[0] is System.Collections.IList rowHuy)
             int.TryParse(rowHuy[0]?.ToString(), out soHuy);
         if (tongTienList != null && tongTienList.Count > 0 && tongTienList[0] is System.Collections.IList rowTien)
             int.TryParse(rowTien[0]?.ToString(), out tongTienValue);
+        if (doanhThuList != null && doanhThuList.Count > 0 && doanhThuList[0] is System.Collections.IList rowDoanhThu)
+            int.TryParse(rowDoanhThu[0]?.ToString(), out doanhthuValue);
 
         ViewBag.SoHoanThanh = soHoanThanh;
         ViewBag.SoHuy = soHuy;
         ViewBag.TongTien = tongTienValue;
+        ViewBag.doanhthu = doanhthuValue;
         return View("ThongKe");
     }
 
