@@ -5,6 +5,10 @@ using System.Threading.Tasks;
 using System.Collections;
 using System.Data.SqlClient;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
+using System.Net.Mail;
+using System.Net;
+using System.IO;
 
 
 namespace DoAnCNPM.Models
@@ -36,6 +40,7 @@ namespace DoAnCNPM.Models
 
             return datalist;
         }
+        
         // Method mới để thực thi stored procedures với tham số
         public ArrayList ExecuteStoredProcedure(string procedureName, Dictionary<string, object> parameters = null)
         {
@@ -95,15 +100,52 @@ namespace DoAnCNPM.Models
 
             return rowsAffected;
         }
-        public string Xulydulieu(string text)
-        {
+        
+        public string Xulydulieu( string text){
             String s = text.Replace(",", "&44;");
-            s = s.Replace("\"", "&34;");
+            s = s.Replace("\"","&34;");
             s = s.Replace("'", "&39;");
             s = s.Replace("\r", "");
             s = s.Replace("\n", "");
             return s;
         }
 
+        // Gửi email OTP qua Gmail SMTP
+        public static bool SendEmail(string toEmail, string subject, string body)
+        {
+            try
+            {
+                // Đọc cấu hình SMTP từ appsettings.json
+                var config = new ConfigurationBuilder()
+                    .SetBasePath(Directory.GetCurrentDirectory())
+                    .AddJsonFile("appsettings.json").Build();
+                var smtpSection = config.GetSection("Smtp");
+                string host = smtpSection["Host"];
+                int port = int.Parse(smtpSection["Port"]);
+                bool enableSsl = bool.Parse(smtpSection["EnableSsl"]);
+                string user = smtpSection["User"];
+                string pass = smtpSection["Password"];
+                string sender = smtpSection["Sender"];
+
+                var client = new SmtpClient(host, port)
+                {
+                    Credentials = new NetworkCredential(user, pass),
+                    EnableSsl = enableSsl
+                };
+                var mail = new MailMessage();
+                mail.From = new MailAddress(sender, "VOV Bác Sĩ");
+                mail.To.Add(toEmail);
+                mail.Subject = subject;
+                mail.Body = body;
+                mail.IsBodyHtml = false;
+                client.Send(mail);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                // Có thể log lỗi ra file nếu cần
+                return false;
+            }
+        }
     }
 }

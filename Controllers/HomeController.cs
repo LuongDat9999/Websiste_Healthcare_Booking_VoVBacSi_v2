@@ -12,7 +12,7 @@ using System.Collections;
 using System.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
-
+using IOF = System.IO.File;
 
 public class HomeController : Controller
 {
@@ -97,10 +97,17 @@ public class HomeController : Controller
     {
         DataModel db = new DataModel();
         var list = db.get("EXEC CheckLogin '" + sdt + "','" + password + "'");
-
         if (list.Count > 0 && list[0] is ArrayList arrayList && arrayList.Count > 1)
         {
+            // Lấy MaND từ kết quả
             var userInfo = arrayList[0]?.ToString() ?? "Unknown";
+            // Kiểm tra xác thực email
+            var emailVerified = db.get($"SELECT IsEmailVerified FROM NGUOIDUNG WHERE MaND = '{userInfo}'");
+            if (emailVerified != null && emailVerified.Count > 0 && ((ArrayList)emailVerified[0])[0].ToString() == "0")
+            {
+                TempData["ErrorMessage"] = "Tài khoản chưa xác thực email. Vui lòng kiểm tra email để xác thực.";
+                return RedirectToAction("VerifyEmail", "Home");
+            }
             _session.SetString("taikhoan", userInfo);
             return RedirectToAction("Index", "Home");
         }
@@ -110,25 +117,42 @@ public class HomeController : Controller
         }
     }
 
-    // -------- REGISTER ----------//
+     // -------- REGISTER ----------//
     public IActionResult Register()
     {
         LayoutShare();
         return View();
     }
     [HttpPost]
-    public IActionResult RegisterProcess(string TenND, string Password, string sdt)
+    public IActionResult RegisterProcess(string TenND, string Password, string sdt, string Email)
     {
         DataModel db = new DataModel();
-
-        var list = db.get($"EXEC REGISTER N'{TenND}', '{Password}', '{sdt}'");
-
-        if (list.Count > 0 && list[0] is ArrayList arrayList && arrayList.Count >= 2)
+        // Đăng ký user với IsEmailVerified = 0
+        var list = db.get($"EXEC REGISTER N'{TenND}', '{Password}', '{sdt}', '{Email}', 0");
+        // Lấy MaND mới nhất theo email và sdt
+        var user = db.get($"SELECT TOP 1 MaND FROM NGUOIDUNG WHERE Email = '{Email}' AND SDT = '{sdt}' ORDER BY MaND DESC");
+        if (user != null && user.Count > 0)
         {
-            string userName = arrayList[0]?.ToString() ?? "Unknown";
-            HttpContext.Session.SetString("taikhoan", userName);
-
-            return RedirectToAction("Index", "Home");
+            int maND = int.Parse(((ArrayList)user[0])[0].ToString());
+            // Sinh OTP
+            Random random = new Random();
+            string otp = random.Next(100000, 999999).ToString();
+            // Xóa OTP cũ nếu có
+            db.get($"DELETE FROM RESET_TOKENS WHERE MaND = {maND}");
+            // Lưu OTP mới
+            db.get($"INSERT INTO RESET_TOKENS (MaND, Token, CreatedAt, ExpiresAt, IsUsed) VALUES ({maND}, '{otp}', GETDATE(), DATEADD(MINUTE, 15, GETDATE()), 0)");
+            // Gửi OTP qua email
+            string subject = "Mã xác thực đăng ký tài khoản";
+            string body = $"Mã xác thực đăng ký tài khoản của bạn là: {otp}. Mã có hiệu lực trong 15 phút.";
+            bool sent = DataModel.SendEmail(Email, subject, body);
+            if (!sent)
+            {
+                TempData["ErrorMessage"] = "Không gửi được email xác thực. Vui lòng thử lại sau.";
+                return RedirectToAction("Register", "Home");
+            }
+            TempData["SuccessMessage"] = $"Đã gửi mã xác thực đến email: {Email}. Vui lòng kiểm tra hộp thư.";
+            TempData["Email"] = Email;
+            return RedirectToAction("VerifyEmail", "Home", new { email = Email });
         }
         else
         {
@@ -365,44 +389,44 @@ public class HomeController : Controller
     {
         LayoutShare();
         var taikhoan = HttpContext.Session.GetString("taikhoan");
-        
+
         if (string.IsNullOrEmpty(taikhoan))
         {
             return RedirectToAction("Login", "Home");
         }
-        
+
         ViewData["TaiKhoan"] = taikhoan;
         return View();
     }
-    
+
     [HttpPost]
     public IActionResult ChangePasswordProcess(string currentPassword, string newPassword, string confirmPassword)
     {
         var taikhoan = HttpContext.Session.GetString("taikhoan");
-        
+
         if (string.IsNullOrEmpty(taikhoan))
         {
             TempData["ErrorMessage"] = "Vui lòng đăng nhập để thực hiện chức năng này.";
             return RedirectToAction("Login", "Home");
         }
-        
+
         // Kiểm tra mật khẩu mới và xác nhận mật khẩu
         if (string.IsNullOrEmpty(newPassword) || newPassword.Length < 6)
         {
             TempData["ErrorMessage"] = "Mật khẩu mới phải có ít nhất 6 ký tự.";
             return RedirectToAction("ChangePassword", "Home");
         }
-        
+
         if (newPassword != confirmPassword)
         {
             TempData["ErrorMessage"] = "Mật khẩu xác nhận không khớp.";
             return RedirectToAction("ChangePassword", "Home");
         }
-        
+
         try
         {
             DataModel db = new DataModel();
-            
+
             // Kiểm tra mật khẩu hiện tại
             var parameters = new Dictionary<string, object>
             {
@@ -410,13 +434,13 @@ public class HomeController : Controller
                 { "@CurrentPassword", currentPassword }
             };
             var checkCurrentPassword = db.ExecuteStoredProcedure("CheckCurrentPassword", parameters);
-            
+
             if (checkCurrentPassword == null || checkCurrentPassword.Count == 0)
             {
                 TempData["ErrorMessage"] = "Mật khẩu hiện tại không đúng.";
                 return RedirectToAction("ChangePassword", "Home");
             }
-            
+
             // Cập nhật mật khẩu mới
             var updateParameters = new Dictionary<string, object>
             {
@@ -424,7 +448,7 @@ public class HomeController : Controller
                 { "@NewPassword", newPassword }
             };
             int rowsAffected = db.ExecuteNonQuery("UpdatePassword", updateParameters);
-            
+
             if (rowsAffected > 0)
             {
                 TempData["SuccessMessage"] = "Đổi mật khẩu thành công!";
@@ -440,6 +464,154 @@ public class HomeController : Controller
         {
             TempData["ErrorMessage"] = "Có lỗi xảy ra: " + ex.Message;
             return RedirectToAction("ChangePassword", "Home");
+        }
+    }
+    // ---------- CHỨC NĂNG QUÊN MẬT KHẨU ------------//
+    public IActionResult ForgotPassword()
+    {
+        LayoutShare();
+        return View();
+    }
+    
+    [HttpPost]
+    public IActionResult ForgotPasswordProcess(string email)
+    {
+        if (string.IsNullOrEmpty(email))
+        {
+            TempData["ErrorMessage"] = "Vui lòng nhập email.";
+            return RedirectToAction("ForgotPassword", "Home");
+        }
+        try
+        {
+            DataModel db = new DataModel();
+            // Kiểm tra email có tồn tại không
+            var user = db.get($"SELECT MaND, TenND FROM NGUOIDUNG WHERE Email = '{email}'");
+            if (user == null || user.Count == 0)
+            {
+                TempData["ErrorMessage"] = "Email không tồn tại trong hệ thống.";
+                return RedirectToAction("ForgotPassword", "Home");
+            }
+            // Tạo token reset password (6 số ngẫu nhiên)
+            Random random = new Random();
+            string resetToken = random.Next(100000, 999999).ToString();
+            // Lưu token vào database
+            var userInfo = user[0] as ArrayList;
+            int maND = Convert.ToInt32(userInfo[0]);
+            db.get($"DELETE FROM RESET_TOKENS WHERE MaND = {maND}");
+            db.get($"INSERT INTO RESET_TOKENS (MaND, Token, CreatedAt, ExpiresAt, IsUsed) VALUES ({maND}, '{resetToken}', GETDATE(), DATEADD(MINUTE, 15, GETDATE()), 0)");
+            // Gửi email OTP
+            string subject = "Mã xác thực đặt lại mật khẩu";
+            string body = $"Mã xác thực đặt lại mật khẩu của bạn là: {resetToken}. Mã có hiệu lực trong 15 phút.";
+            bool sent = DataModel.SendEmail(email, subject, body);
+            if (!sent)
+            {
+                TempData["ErrorMessage"] = "Không gửi được email. Vui lòng thử lại sau.";
+                return RedirectToAction("ForgotPassword", "Home");
+            }
+            TempData["SuccessMessage"] = $"Đã gửi mã xác thực đến email: {email}. Vui lòng kiểm tra hộp thư.";
+            TempData["Email"] = email;
+            return RedirectToAction("ResetPassword", "Home");
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = "Có lỗi xảy ra: " + ex.Message;
+            return RedirectToAction("ForgotPassword", "Home");
+        }
+    }
+    
+    public IActionResult ResetPassword()
+    {
+        LayoutShare();
+        return View();
+    }
+    
+    [HttpPost]
+    public IActionResult ResetPasswordProcess(string email, string token, string newPassword, string confirmPassword)
+    {
+        if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(newPassword) || string.IsNullOrEmpty(confirmPassword))
+        {
+            TempData["ErrorMessage"] = "Vui lòng nhập đầy đủ thông tin.";
+            return RedirectToAction("ResetPassword", "Home");
+        }
+        if (newPassword != confirmPassword)
+        {
+            TempData["ErrorMessage"] = "Mật khẩu xác nhận không khớp.";
+            return RedirectToAction("ResetPassword", "Home");
+        }
+        if (newPassword.Length < 6)
+        {
+            TempData["ErrorMessage"] = "Mật khẩu phải có ít nhất 6 ký tự.";
+            return RedirectToAction("ResetPassword", "Home");
+        }
+        try
+        {
+            DataModel db = new DataModel();
+            // Kiểm tra token có hợp lệ không (theo email)
+            var tokenCheck = db.get($"SELECT rt.MaND, rt.IsUsed, rt.ExpiresAt FROM RESET_TOKENS rt INNER JOIN NGUOIDUNG nd ON rt.MaND = nd.MaND WHERE nd.Email = '{email}' AND rt.Token = '{token}' AND rt.IsUsed = 0 AND rt.ExpiresAt > GETDATE()");
+            if (tokenCheck == null || tokenCheck.Count == 0)
+            {
+                TempData["ErrorMessage"] = "Mã xác thực không hợp lệ hoặc đã hết hạn.";
+                return RedirectToAction("ResetPassword", "Home");
+            }
+            var tokenInfo = tokenCheck[0] as ArrayList;
+            int maND = Convert.ToInt32(tokenInfo[0]);
+            // Cập nhật mật khẩu mới
+            db.get($"UPDATE NGUOIDUNG SET Password = '{newPassword}' WHERE MaND = {maND}");
+            // Đánh dấu token đã sử dụng
+            db.get($"UPDATE RESET_TOKENS SET IsUsed = 1 WHERE MaND = {maND} AND Token = '{token}'");
+            TempData["SuccessMessage"] = "Đặt lại mật khẩu thành công! Vui lòng đăng nhập với mật khẩu mới.";
+            return RedirectToAction("Login", "Home");
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = "Có lỗi xảy ra: " + ex.Message;
+            return RedirectToAction("ResetPassword", "Home");
+        }
+    }
+    
+    public IActionResult VerifyEmail(string email)
+    {
+        LayoutShare();
+        ViewBag.Email = email;
+        return View();
+    }
+
+    [HttpPost]
+    public IActionResult VerifyEmailProcess(string email, string otp)
+    {
+        if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(otp))
+        {
+            TempData["ErrorMessage"] = "Vui lòng nhập đầy đủ thông tin.";
+            return RedirectToAction("VerifyEmail", new { email });
+        }
+        try
+        {
+            DataModel db = new DataModel();
+            // Lấy MaND mới nhất theo email
+            var user = db.get($"SELECT TOP 1 MaND FROM NGUOIDUNG WHERE Email = '{email}' ORDER BY MaND DESC");
+            if (user == null || user.Count == 0)
+            {
+                TempData["ErrorMessage"] = "Email không tồn tại.";
+                return RedirectToAction("VerifyEmail", new { email });
+            }
+            int maND = int.Parse(((ArrayList)user[0])[0].ToString());
+            // Kiểm tra OTP đúng user, chưa dùng, chưa hết hạn
+            var tokenCheck = db.get($"SELECT 1 FROM RESET_TOKENS WHERE MaND = {maND} AND Token = '{otp}' AND IsUsed = 0 AND ExpiresAt > GETDATE()");
+            if (tokenCheck == null || tokenCheck.Count == 0)
+            {
+                TempData["ErrorMessage"] = "Mã xác thực không hợp lệ hoặc đã hết hạn.";
+                return RedirectToAction("VerifyEmail", new { email });
+            }
+            // Cập nhật xác thực email
+            db.get($"UPDATE NGUOIDUNG SET IsEmailVerified = 1 WHERE MaND = {maND}");
+            db.get($"UPDATE RESET_TOKENS SET IsUsed = 1 WHERE MaND = {maND} AND Token = '{otp}'");
+            TempData["SuccessMessage"] = "Xác thực email thành công! Bạn có thể đăng nhập.";
+            return RedirectToAction("Login", "Home");
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = "Có lỗi xảy ra: " + ex.Message;
+            return RedirectToAction("VerifyEmail", new { email });
         }
     }
 }
