@@ -16,7 +16,9 @@
     <div class="container">
         <div class="sidebar">
             <div class="logo">
-                <img src="~/images/logo_vov.png" alt="Logo"/>
+                <a href="@Url.Action("Index", "Admin")">
+                    <img src="~/images/logo_vov.png" alt="Logo"/>
+                </a>
             </div>
             <ul class="menu">
                 <li>
@@ -63,7 +65,6 @@
                         Quản lý thông báo
                     </a>
                 </li>
-                <li><a href="@Url.Action("ThongKe", "Admin")"><i class="fas fa-chart-bar"></i> Thống kê</a></li>
             </ul>
         </div>
 
