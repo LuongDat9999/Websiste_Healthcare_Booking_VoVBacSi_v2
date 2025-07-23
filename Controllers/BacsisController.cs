@@ -29,17 +29,7 @@ public class BacsisController : Controller
     DataModel db = new DataModel();
     public IActionResult Index()
     {
-        var userId = _session.GetString("userId");
-        DataModel db = new DataModel();
-        // Tổng doanh thu của bác sĩ (tất cả năm)
-        var revenueList = db.get($"SELECT ISNULL(SUM(SoTienTT),0) FROM CUOCHENKHAM WHERE MaBS = (SELECT MaBS FROM BACSI WHERE MaND = {userId}) AND MaTTCH = 4");
-        int totalRevenue = 0;
-        if (revenueList != null && revenueList.Count > 0 && revenueList[0] is System.Collections.IList rowRevenue)
-            int.TryParse(rowRevenue[0]?.ToString(), out totalRevenue);
-        ViewBag.TotalRevenue = totalRevenue;
-        // Tổng thu nhập (70% doanh thu)
-        int totalIncome = (int)(totalRevenue * 0.7);
-        ViewBag.TotalIncome = totalIncome;
+
         return View();
     }
 

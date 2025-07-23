@@ -13,17 +13,28 @@ using System.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using IOF = System.IO.File;
+using Newtonsoft.Json;
+using System.Text;
+using Websiste_Healthcare_Booking_VoVBacSi_main.Models;
+
+
+
 
 public class HomeController : Controller
 {
 
     private readonly ILogger<HomeController> _logger;
     private readonly ISession _session;
+    private readonly HttpClient _httpClient;
+    private readonly string _apiUrl = "http://localhost:8000/predict";
 
-    public HomeController(ILogger<HomeController> logger, IHttpContextAccessor httpContextAccessor)
+
+    public HomeController(ILogger<HomeController> logger, IHttpContextAccessor httpContextAccessor, HttpClient httpClient)
     {
         _logger = logger;
         _session = httpContextAccessor.HttpContext.Session;
+        _httpClient = httpClient;
+        _httpClient.Timeout = TimeSpan.FromSeconds(30); // Set timeout
     }
 
     public IActionResult LayoutShare()
@@ -472,7 +483,7 @@ public class HomeController : Controller
         LayoutShare();
         return View();
     }
-    
+
     [HttpPost]
     public IActionResult ForgotPasswordProcess(string email)
     {
@@ -518,13 +529,13 @@ public class HomeController : Controller
             return RedirectToAction("ForgotPassword", "Home");
         }
     }
-    
+
     public IActionResult ResetPassword()
     {
         LayoutShare();
         return View();
     }
-    
+
     [HttpPost]
     public IActionResult ResetPasswordProcess(string email, string token, string newPassword, string confirmPassword)
     {
@@ -568,7 +579,7 @@ public class HomeController : Controller
             return RedirectToAction("ResetPassword", "Home");
         }
     }
-    
+
     public IActionResult VerifyEmail(string email)
     {
         LayoutShare();
@@ -613,6 +624,57 @@ public class HomeController : Controller
             TempData["ErrorMessage"] = "Có lỗi xảy ra: " + ex.Message;
             return RedirectToAction("VerifyEmail", new { email });
         }
+    }
+
+    public IActionResult DiseasePredict()
+    {
+        LayoutShare();
+        return View();
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> DiseasePredict(string description)
+    {
+        LayoutShare();
+        ViewBag.Description = description;
+        if (string.IsNullOrWhiteSpace(description))
+        {
+            ViewBag.Error = "Vui lòng nhập mô tả triệu chứng";
+            return View();
+        }
+
+        try
+        {
+            var requestBody = new { text = description.Trim() };
+            var json = JsonConvert.SerializeObject(requestBody);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.PostAsync(_apiUrl, content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var resultString = await response.Content.ReadAsStringAsync();
+                var predictResult = JsonConvert.DeserializeObject<PredictionResponse>(resultString);
+                ViewBag.PredictResult = predictResult;
+            }
+            else
+            {
+                ViewBag.Error = $"API trả về lỗi: {response.StatusCode}";
+            }
+        }
+        catch (HttpRequestException)
+        {
+            ViewBag.Error = "Không thể kết nối đến API dự đoán. Vui lòng kiểm tra server Python có đang chạy không.";
+        }
+        catch (TaskCanceledException)
+        {
+            ViewBag.Error = "Yêu cầu bị timeout. Vui lòng thử lại.";
+        }
+        catch (Exception)
+        {
+            ViewBag.Error = "Có lỗi xảy ra khi xử lý yêu cầu.";
+        }
+        return View();
     }
 }
 
