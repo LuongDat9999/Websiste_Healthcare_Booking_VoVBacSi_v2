@@ -23,7 +23,7 @@
                     <form class="needs-validation input-box" action="~/home/VerifyEmailProcess" method="post">
                         <input type="hidden" name="email" value="@Context.Request.Query["email"]">
                         <div class="input-field">
-                            <input type="text" class="input-info" id="otp" required name="otp" placeholder="123456" maxlength="6">
+                            <input type="text" class="input-info" id="otp" required name="otp"  maxlength="6">
                             <label for="otp">Mã xác thực</label>
                             <div class="invalid-feedback">* Vui lòng nhập mã xác thực</div>
                             <div class="valid-feedback">

@@ -5,6 +5,13 @@
 
 <link rel="stylesheet" href="~/css/Article.css" asp-append-version="true">
 
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger text-center fw-bold" style="margin-bottom: 1.2rem; border-radius: 8px;">
+        <i class="fas fa-exclamation-triangle me-2"></i> @TempData["ErrorMessage"]
+    </div>
+}
+
 <div class="wrapper">
     <div id="loginForm" class="container main">
         <div class="form-login">

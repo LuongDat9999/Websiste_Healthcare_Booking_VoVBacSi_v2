@@ -138,38 +138,41 @@ public class HomeController : Controller
     public IActionResult RegisterProcess(string TenND, string Password, string sdt, string Email)
     {
         DataModel db = new DataModel();
-        // Đăng ký user với IsEmailVerified = 0
-        var list = db.get($"EXEC REGISTER N'{TenND}', '{Password}', '{sdt}', '{Email}', 0");
-        // Lấy MaND mới nhất theo email và sdt
-        var user = db.get($"SELECT TOP 1 MaND FROM NGUOIDUNG WHERE Email = '{Email}' AND SDT = '{sdt}' ORDER BY MaND DESC");
-        if (user != null && user.Count > 0)
+        // Kiểm tra trùng số điện thoại
+        var checkSdt = db.get($"SELECT 1 FROM NGUOIDUNG WHERE SDT = '{sdt}'");
+        if (checkSdt != null && checkSdt.Count > 0)
         {
-            int maND = int.Parse(((ArrayList)user[0])[0].ToString());
-            // Sinh OTP
-            Random random = new Random();
-            string otp = random.Next(100000, 999999).ToString();
-            // Xóa OTP cũ nếu có
-            db.get($"DELETE FROM RESET_TOKENS WHERE MaND = {maND}");
-            // Lưu OTP mới
-            db.get($"INSERT INTO RESET_TOKENS (MaND, Token, CreatedAt, ExpiresAt, IsUsed) VALUES ({maND}, '{otp}', GETDATE(), DATEADD(MINUTE, 15, GETDATE()), 0)");
-            // Gửi OTP qua email
-            string subject = "Mã xác thực đăng ký tài khoản";
-            string body = $"Mã xác thực đăng ký tài khoản của bạn là: {otp}. Mã có hiệu lực trong 15 phút.";
-            bool sent = DataModel.SendEmail(Email, subject, body);
-            if (!sent)
-            {
-                TempData["ErrorMessage"] = "Không gửi được email xác thực. Vui lòng thử lại sau.";
-                return RedirectToAction("Register", "Home");
-            }
-            TempData["SuccessMessage"] = $"Đã gửi mã xác thực đến email: {Email}. Vui lòng kiểm tra hộp thư.";
-            TempData["Email"] = Email;
-            return RedirectToAction("VerifyEmail", "Home", new { email = Email });
-        }
-        else
-        {
-            ViewBag.Error = "Đăng ký không thành công. Vui lòng thử lại.";
+            TempData["ErrorMessage"] = "Số điện thoại đã được sử dụng. Vui lòng nhập số khác.";
             return RedirectToAction("Register", "Home");
         }
+        // Kiểm tra trùng email
+        var checkEmail = db.get($"SELECT 1 FROM NGUOIDUNG WHERE Email = '{Email}'");
+        if (checkEmail != null && checkEmail.Count > 0)
+        {
+            TempData["ErrorMessage"] = "Email đã được sử dụng. Vui lòng nhập email khác.";
+            return RedirectToAction("Register", "Home");
+        }
+        // Sinh OTP
+        Random random = new Random();
+        string otp = random.Next(100000, 999999).ToString();
+        // Lưu tạm thông tin đăng ký vào TempData
+        TempData["TenND"] = TenND;
+        TempData["Password"] = Password;
+        TempData["sdt"] = sdt;
+        TempData["Email"] = Email;
+        TempData["OTP"] = otp;
+        // Gửi OTP qua email
+        string subject = "Mã xác thực đăng ký tài khoản";
+        string body = $"Mã xác thực đăng ký tài khoản của bạn là: {otp}. Mã có hiệu lực trong 15 phút.";
+        bool sent = DataModel.SendEmail(Email, subject, body);
+        if (!sent)
+        {
+            TempData["ErrorMessage"] = "Không gửi được email xác thực. Vui lòng thử lại sau.";
+            return RedirectToAction("Register", "Home");
+        }
+        TempData["SuccessMessage"] = $"Đã gửi mã xác thực đến email: {Email}. Vui lòng kiểm tra hộp thư.";
+        TempData["Email"] = Email;
+        return RedirectToAction("VerifyEmail", "Home", new { email = Email });
     }
     // ------- Action đăng xuất------- //
     public IActionResult Logout()
@@ -597,25 +600,25 @@ public class HomeController : Controller
         }
         try
         {
-            DataModel db = new DataModel();
-            // Lấy MaND mới nhất theo email
-            var user = db.get($"SELECT TOP 1 MaND FROM NGUOIDUNG WHERE Email = '{email}' ORDER BY MaND DESC");
-            if (user == null || user.Count == 0)
-            {
-                TempData["ErrorMessage"] = "Email không tồn tại.";
-                return RedirectToAction("VerifyEmail", new { email });
-            }
-            int maND = int.Parse(((ArrayList)user[0])[0].ToString());
-            // Kiểm tra OTP đúng user, chưa dùng, chưa hết hạn
-            var tokenCheck = db.get($"SELECT 1 FROM RESET_TOKENS WHERE MaND = {maND} AND Token = '{otp}' AND IsUsed = 0 AND ExpiresAt > GETDATE()");
-            if (tokenCheck == null || tokenCheck.Count == 0)
+            // Kiểm tra OTP
+            if (TempData["OTP"] == null || TempData["OTP"].ToString() != otp)
             {
                 TempData["ErrorMessage"] = "Mã xác thực không hợp lệ hoặc đã hết hạn.";
                 return RedirectToAction("VerifyEmail", new { email });
             }
-            // Cập nhật xác thực email
-            db.get($"UPDATE NGUOIDUNG SET IsEmailVerified = 1 WHERE MaND = {maND}");
-            db.get($"UPDATE RESET_TOKENS SET IsUsed = 1 WHERE MaND = {maND} AND Token = '{otp}'");
+            // Lấy lại thông tin đăng ký từ TempData
+            string TenND = TempData["TenND"]?.ToString();
+            string Password = TempData["Password"]?.ToString();
+            string sdt = TempData["sdt"]?.ToString();
+            string Email = TempData["Email"]?.ToString();
+            if (string.IsNullOrEmpty(TenND) || string.IsNullOrEmpty(Password) || string.IsNullOrEmpty(sdt) || string.IsNullOrEmpty(Email))
+            {
+                TempData["ErrorMessage"] = "Thông tin đăng ký không hợp lệ hoặc đã hết hạn.";
+                return RedirectToAction("Register", "Home");
+            }
+            DataModel db = new DataModel();
+            // Lưu tài khoản vào DB với IsEmailVerified = 1
+            db.get($"EXEC REGISTER N'{TenND}', '{Password}', '{sdt}', '{Email}', 1");
             TempData["SuccessMessage"] = "Xác thực email thành công! Bạn có thể đăng nhập.";
             return RedirectToAction("Login", "Home");
         }
