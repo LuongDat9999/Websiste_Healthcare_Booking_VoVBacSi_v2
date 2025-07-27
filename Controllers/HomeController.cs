@@ -42,6 +42,37 @@ public class HomeController : Controller
         var taikhoan = _session.GetString("taikhoan");
         ViewData["TaiKhoan"] = taikhoan;
 
+        // Kiểm tra session timeout
+        if (!string.IsNullOrEmpty(taikhoan))
+        {
+            // Kiểm tra xem session có còn hợp lệ không
+            var sessionTimeout = _session.GetString("SessionTimeout");
+            if (string.IsNullOrEmpty(sessionTimeout))
+            {
+                // Session mới, set timeout
+                _session.SetString("SessionTimeout", DateTime.Now.AddMinutes(30).ToString());
+            }
+            else
+            {
+                // Kiểm tra xem session có hết hạn chưa
+                if (DateTime.TryParse(sessionTimeout, out DateTime timeout))
+                {
+                    if (DateTime.Now > timeout)
+                    {
+                        // Session hết hạn
+                        _session.Clear();
+                        TempData["SessionTimeoutMessage"] = "Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.";
+                        return RedirectToAction("Login", "Home");
+                    }
+                    else
+                    {
+                        // Cập nhật timeout
+                        _session.SetString("SessionTimeout", DateTime.Now.AddMinutes(30).ToString());
+                    }
+                }
+            }
+        }
+
         DataModel db = new DataModel();
         ViewBag.listKB = db.get("EXEC getAllKhoaBenh");
 

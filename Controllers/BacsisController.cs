@@ -345,6 +345,41 @@ public class BacsisController : Controller
     public IActionResult HomeBs()
     {
         var userId = _session.GetString("userId");
+        
+        // Kiểm tra session timeout
+        if (string.IsNullOrEmpty(userId))
+        {
+            TempData["SessionTimeoutMessage"] = "Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.";
+            return RedirectToAction("Index", "Bacsis");
+        }
+
+        // Kiểm tra session timeout
+        var sessionTimeout = _session.GetString("SessionTimeout");
+        if (string.IsNullOrEmpty(sessionTimeout))
+        {
+            // Session mới, set timeout
+            _session.SetString("SessionTimeout", DateTime.Now.AddMinutes(30).ToString());
+        }
+        else
+        {
+            // Kiểm tra xem session có hết hạn chưa
+            if (DateTime.TryParse(sessionTimeout, out DateTime timeout))
+            {
+                if (DateTime.Now > timeout)
+                {
+                    // Session hết hạn
+                    _session.Clear();
+                    TempData["SessionTimeoutMessage"] = "Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.";
+                    return RedirectToAction("Index", "Bacsis");
+                }
+                else
+                {
+                    // Cập nhật timeout
+                    _session.SetString("SessionTimeout", DateTime.Now.AddMinutes(30).ToString());
+                }
+            }
+        }
+
         ArrayList idBS_sql = db.get("EXEC GetMaBSByUserId @UserId = " + userId);
 
         // Ép kiểu từng phần tử
@@ -548,6 +583,11 @@ public class BacsisController : Controller
         // Lấy thông tin chi tiết hồ sơ bệnh nhân theo id (id là MaHS)
         var hoSo = db.get($"SELECT h.MaHS, n.TenND, n.NgaySinh, n.GioiTinh, n.sdt, n.DiaChi, h.MoTaBenh, h.MaND FROM HOSO h JOIN NGUOIDUNG n ON h.MaND = n.MaND WHERE h.MaHS = {id}");
         ViewBag.HoSo = hoSo;
+        
+        // Lấy hình ảnh bệnh từ bảng HINHANHBENH
+        var hinhAnhBenh = db.get($"SELECT HinhAnhBenh FROM HINHANHBENH WHERE MaHS = {id}");
+        ViewBag.HinhAnhBenh = hinhAnhBenh;
+        
         return View();
     }
 
