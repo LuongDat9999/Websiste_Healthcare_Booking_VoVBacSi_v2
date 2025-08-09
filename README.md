@@ -30,7 +30,18 @@
 - Quản lý, thống kê, xác nhận lịch hẹn khám phía bác sĩ
 - Quản lý, thống kê, xác nhận đăng ký bác sĩ, quản lý thông tin website ở phía admin
 - **Dự đoán bệnh** từ mô tả triệu chứng tiếng Việt (sử dụng Pre-Train VihealthBert)
+- 
+--- 
 
+## Mô-đun AI dự đoán bệnh (NLP)
+
+- **Kiểu**: Microservice Python với FastAPI
+- **Chức năng**: Nhận mô tả triệu chứng tiếng Việt, trả về danh sách bệnh khả dĩ + xác suất
+- **Mô hình được huấn luyện từ**: [Pretrain_VihealthBert_DiseaseClassifier](https://github.com/LuongDat9999/Pretrain_VihealthBert_DiseaseClassifier)
+- **Ví dụ Request**:
+```http
+POST /api/predict
+Content-Type: application/json
 ---
 
 ## Nhược điểm
