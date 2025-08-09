@@ -38,10 +38,7 @@
 - **Kiểu**: Microservice Python với FastAPI
 - **Chức năng**: Nhận mô tả triệu chứng tiếng Việt, trả về danh sách bệnh khả dĩ + xác suất
 - **Mô hình được huấn luyện từ**: [Pretrain_VihealthBert_DiseaseClassifier](https://github.com/LuongDat9999/Pretrain_VihealthBert_DiseaseClassifier)
-- **Ví dụ Request**:
-    ```http
-        POST /api/predict
-        Content-Type: application/json
+
 
 ---
 
