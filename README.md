@@ -1,7 +1,7 @@
 # VoVBacSi v2 — Hệ thống Đặt lịch & Tư vấn Sức khỏe (ASP.NET Core MVC + AI NLP)
 
 Ứng dụng web hỗ trợ **đặt lịch khám**, **quản lý bác sĩ/bệnh nhân**, **tra cứu thông tin**, và có **mô-đun AI (NLP)** dự đoán bệnh từ mô tả triệu chứng tiếng Việt (tích hợp từ service Python chạy bằng FastAPI).
-deploy in: [vovbacsisv.somee.com](http://vovbacsisv.somee.com)
+deploy in: [vovbacsisv](http://vovbacsisv.somee.com)
 ---
 
 ## Giới thiệu
